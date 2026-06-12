@@ -96,7 +96,7 @@
 <script>
   // ⚠️ PENTING: Ganti dengan URL Web App dari Google Apps Script anda
   // (Lihat SETUP_GUIDE.md, Step 5). Format: https://script.google.com/macros/s/XXXX/exec
-  var API_URL = "https://script.google.com/macros/s/AKfycbzXub_lkvR0Pc7Fz5kVK6kPoLOammsDcnHwXf8mCmi93c121bq_ombJy0dcUghKHfZWfA/exec";
+  var API_URL = "PASTE_YOUR_APPS_SCRIPT_URL_HERE";
 </script>
 <!-- ======================================= -->
 
@@ -137,9 +137,9 @@
 <script>
 // ============ CONFIG ============
 var MATERIALS = [
-  { id:"Bubble Wrap",  unit:"bags",  color:"var(--blue)",  bg:"var(--blue-bg)" },
-  { id:"Glue Tribond", unit:"pcs",   color:"var(--amber)", bg:"var(--amber-bg)" },
-  { id:"Grease",       unit:"tubes", color:"var(--green)", bg:"var(--green-bg)" }
+  { id:"Bubble Wrap",  unit:"bag",   color:"var(--blue)",  bg:"var(--blue-bg)",  pcsPerUnit:200, subUnit:"pcs" },
+  { id:"Glue Tribond", unit:"tubes", color:"var(--amber)", bg:"var(--amber-bg)", pcsPerUnit:0,   subUnit:"" },
+  { id:"NPC Grease",   unit:"pail",  color:"var(--green)", bg:"var(--green-bg)", pcsPerUnit:0,   subUnit:"" }
 ];
 var LINES = ["L1 DM","L2 DM","Other"];
 var SHIFTS = ["Morning","Afternoon","Night"];
@@ -158,6 +158,12 @@ function pad(n){return String(n).padStart(2,"0");}
 function mKey(ds){return ds.slice(0,7);}
 function dayName(ds){return DAYS[new Date(ds+"T12:00:00").getDay()];}
 function mat(id){return MATERIALS.find(function(m){return m.id===id;});}
+// Pulangkan string "= X pcs" kalau material ada conversion, else "".
+function subQty(matId,qty){
+  var m=mat(matId);
+  if(!m||!m.pcsPerUnit||!qty)return "";
+  return "= "+(qty*m.pcsPerUnit).toLocaleString()+" "+m.subUnit;
+}
 
 // Opening stock disimpan local kat phone (localStorage), sebab dia setup sekali je per bulan
 function loadOpenings(){try{return JSON.parse(localStorage.getItem("aap_openings")||"{}");}catch(e){return {};}}
@@ -284,7 +290,8 @@ function homeView(){
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
         '<div><span class="lbl">'+m.id+' · '+m.unit+'</span>'+
         '<div style="display:flex;align-items:baseline;gap:6px"><span class="bal-num mono" style="color:'+m.color+'">'+bal+'</span>'+
-        '<span style="font-size:12px;color:var(--muted)">'+m.unit+' baki</span></div></div>'+
+        '<span style="font-size:12px;color:var(--muted)">'+m.unit+' baki</span></div>'+
+        (m.pcsPerUnit?'<p class="mono" style="font-size:11px;color:var(--muted);margin:2px 0 0">'+subQty(m.id,bal)+'</p>':'')+'</div>'+
         '<span class="badge" style="color:'+st.c+';background:'+st.c+'22">'+st.l+'</span></div>'+
       '<div class="row2" style="margin-bottom:'+(hasOp&&op>0?'10px':'4px')+'">'+
         '<div class="stat" style="background:var(--in-bg)"><p class="k" style="color:var(--in)">Hari ini IN</p><p class="v mono" style="color:var(--in)">'+tIn+'</p></div>'+
@@ -359,11 +366,13 @@ function recordView(){
   h+='<div style="margin-bottom:12px"><span class="lbl">Quantity ('+m.unit+')</span><div class="qty-row">'+
     '<button class="qty-btn" onclick="stepQty(-1)">−</button>'+
     '<input class="qty-input mono" type="number" min="0" id="qtyInput" placeholder="0" value="'+f.qty+'" oninput="state.form.qty=this.value;updatePreview()">'+
-    '<button class="qty-btn" onclick="stepQty(1)">+</button></div></div>';
+    '<button class="qty-btn" onclick="stepQty(1)">+</button></div>'+
+    (m.pcsPerUnit?'<p class="mono" id="qtyPcs" style="font-size:11px;color:var(--muted);margin:6px 0 0;text-align:center">'+(Number(f.qty)?subQty(f.material,Number(f.qty))+' wrap':'1 '+m.unit+' = '+m.pcsPerUnit+' '+m.subUnit)+'</p>':'')+'</div>';
   // preview
   h+='<div class="card" style="background:var(--surface2)"><div style="display:flex;justify-content:space-between;align-items:center">'+
     '<span style="font-size:12px;color:var(--muted)">Balance selepas save</span>'+
-    '<span class="mono" id="preview" style="font-size:15px;font-weight:600;color:'+(newBal<0?'var(--out)':m.color)+'">'+cur+' '+(f.type==="IN"?"+":"-")+' '+(Number(f.qty)||0)+' = '+newBal+' '+m.unit+'</span></div></div>';
+    '<span class="mono" id="preview" style="font-size:15px;font-weight:600;color:'+(newBal<0?'var(--out)':m.color)+'">'+cur+' '+(f.type==="IN"?"+":"-")+' '+(Number(f.qty)||0)+' = '+newBal+' '+m.unit+'</span></div>'+
+    (m.pcsPerUnit?'<p class="mono" id="previewPcs" style="font-size:11px;color:var(--muted);margin:6px 0 0;text-align:right">'+subQty(m.id,newBal)+'</p>':'')+'</div>';
   // remarks
   h+='<div style="margin-bottom:12px"><span class="lbl">Remarks (optional)</span><input type="text" placeholder="Catatan…" value="'+f.remarks.replace(/"/g,'&quot;')+'" oninput="state.form.remarks=this.value"></div>';
   // save
@@ -377,6 +386,11 @@ function updatePreview(){
   var nb=cur+(f.type==="IN"?1:-1)*(Number(f.qty)||0);
   var el=document.getElementById("preview");
   if(el){el.textContent=cur+' '+(f.type==="IN"?"+":"-")+' '+(Number(f.qty)||0)+' = '+nb+' '+m.unit;el.style.color=nb<0?'var(--out)':m.color;}
+  if(m.pcsPerUnit){
+    var pp=document.getElementById("previewPcs"); if(pp)pp.textContent=subQty(m.id,nb);
+    var qp=document.getElementById("qtyPcs");
+    if(qp)qp.textContent=Number(f.qty)?subQty(f.material,Number(f.qty))+' wrap':'1 '+m.unit+' = '+m.pcsPerUnit+' '+m.subUnit;
+  }
 }
 function stepQty(d){
   var v=Math.max(0,(Number(state.form.qty)||0)+d);
