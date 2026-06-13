@@ -144,7 +144,7 @@ var MATERIALS = [
 // Nota: dailyUsage = anggaran guna sehari (default) untuk satu line jalan.
 //   Bubble 4 bag · Glue 1 tube · Grease 0.5 (kg/hari, dalam unit pail = 0.5kg).
 //   Disimpan untuk kegunaan dashboard akan datang (forecast / reorder estimate).
-var LINES = ["Door Mirror","Outer Handle","Pass Thru","Open Stay","Stock Baru Masuk","Other"];
+var LINES = ["L1 DM","L2 DM","Other"];
 var SHIFTS = ["Morning","Afternoon","Night"];
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -231,20 +231,36 @@ function resetLocal(){
 }
 
 // ============ CALC ============
+// Cari entry OPENING terkini (paling lewat tarikh) utk satu material. Ni jadi "anchor".
+function latestOpening(matId){
+  var ops=state.records.filter(function(r){return r.material===matId&&r.type==="OPENING"&&r.date;});
+  if(!ops.length)return null;
+  ops.sort(function(a,b){ if(a.date!==b.date)return a.date<b.date?1:-1; return new Date(b.timestamp||0)-new Date(a.timestamp||0); });
+  return ops[0]; // yang paling lewat
+}
+// Nilai opening stock semasa (qty dari anchor OPENING terkini).
+function getOpening(matId){
+  var op=latestOpening(matId);
+  return op?Number(op.qty):undefined;
+}
+// Tarikh opening terkini.
+function getOpeningDate(matId){
+  var op=latestOpening(matId);
+  return op?op.date:undefined;
+}
+// Balance = opening terkini + (IN − OUT) dari tarikh opening ke 'end'. Entry sebelum opening diabaikan.
 function calcBalance(matId,end){
-  end=end||today();var m=mKey(end);
-  var recs=state.records.filter(function(r){return r.material===matId&&r.date&&r.date.slice(0,7)===m&&r.date<=end;});
-  var opT=recs.filter(function(r){return r.type==="OPENING";}).reduce(function(s,r){return s+Number(r.qty);},0);
+  end=end||today();
+  var op=latestOpening(matId);
+  var base=op?Number(op.qty):0;
+  var fromDate=op?op.date:"0000-00-00";
+  // ambil IN/OUT dari tarikh opening (inklusif) sehingga 'end'. OPENING sendiri tak dikira lagi (dah jadi base).
+  var recs=state.records.filter(function(r){
+    return r.material===matId&&r.date&&r.date>=fromDate&&r.date<=end&&(r.type==="IN"||r.type==="OUT");
+  });
   var inT=recs.filter(function(r){return r.type==="IN";}).reduce(function(s,r){return s+Number(r.qty);},0);
   var outT=recs.filter(function(r){return r.type==="OUT";}).reduce(function(s,r){return s+Number(r.qty);},0);
-  return opT+inT-outT;
-}
-// Dapatkan nilai opening stock semasa (dari entry OPENING dalam Sheet) utk material+bulan ni.
-function getOpening(matId,ds){
-  ds=ds||today();var m=mKey(ds);
-  var ops=state.records.filter(function(r){return r.material===matId&&r.type==="OPENING"&&r.date&&r.date.slice(0,7)===m;});
-  if(!ops.length)return undefined;
-  return ops.reduce(function(s,r){return s+Number(r.qty);},0);
+  return base+inT-outT;
 }
 function todayStat(matId,type){
   return state.records.filter(function(r){return r.material===matId&&r.date===today()&&r.type===type;})
@@ -437,19 +453,23 @@ function doSave(){
 function editOpening(matId){
   var m=mat(matId);
   var cur=getOpening(matId);
-  var val=prompt("Set opening stock untuk "+matId+" (bulan "+MONTHS[new Date().getMonth()]+"):\n\nMasukkan baki dibawa dari penutup bulan lepas.\n\nNota: nilai ini akan GANTI opening sedia ada bulan ni, dan sync ke Google Sheet.",cur!==undefined?cur:"");
+  var curDate=getOpeningDate(matId);
+  var val=prompt("Set opening stock untuk "+matId+":\n\nMasukkan baki sebenar dari stock check.\n\nNota: balance akan dikira BERMULA dari tarikh opening ni (entry sebelum tarikh ini diabaikan). Ganti opening sedia ada & sync ke Google Sheet.",cur!==undefined?cur:"");
   if(val===null)return;
   var n=parseFloat(val);if(isNaN(n)){toast("Nilai tidak sah",false);return;}
-  // Hantar sebagai entry OPENING ke Sheet. Backend akan ganti opening lama bulan ni.
-  var firstDay=mKey(today())+"-01";
+  // Minta tarikh opening (default: tarikh opening sedia ada, atau hari ni)
+  var defDate=curDate||today();
+  var dStr=prompt("Tarikh stock check / opening untuk "+matId+":\n\nFormat: YYYY-MM-DD (contoh 2026-06-20)\n\nBalance akan dikira bermula dari tarikh ni.",defDate);
+  if(dStr===null)return;
+  dStr=dStr.trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dStr)){toast("Format tarikh salah (guna YYYY-MM-DD)",false);return;}
   var id=String(Date.now())+"_"+Math.floor(Math.random()*1000);
-  var rec={id:id,material:matId,type:"OPENING",qty:n,unit:m.unit,line:"-",shift:"-",operator:"Opening",date:firstDay,remarks:"Opening stock "+MONTHS[new Date().getMonth()]+" "+new Date().getFullYear()};
+  var rec={id:id,material:matId,type:"OPENING",qty:n,unit:m.unit,line:"-",shift:"-",operator:"Opening",date:dStr,remarks:"Opening stock (stock check "+dStr+")"};
   toast("Menyimpan opening…",true);
   apiSave(rec).then(function(res){
     if(res.ok){
-      // buang OPENING lama bulan ni dari state, ganti dgn baru
-      var mo=mKey(today());
-      state.records=state.records.filter(function(r){return !(r.material===matId&&r.type==="OPENING"&&r.date&&r.date.slice(0,7)===mo);});
+      // buang OPENING tarikh SAMA je dari state (pembetulan), kekalkan sejarah lain
+      state.records=state.records.filter(function(r){return !(r.material===matId&&r.type==="OPENING"&&r.date===dStr);});
       state.records.push(Object.assign({timestamp:new Date().toISOString()},rec));
       setConn(true);toast("Opening stock disimpan ✓",true);go("home");
     }else{toast("Gagal: "+(res.error||"cuba lagi"),false);}
@@ -531,10 +551,13 @@ function getWeekly(matId){
   return weeks.map(function(w,i){
     var from=ms+"-"+pad(w[0]),to=ms+"-"+pad(Math.min(w[1],dim));
     var recs=state.records.filter(function(r){return r.material===matId&&r.date>=from&&r.date<=to;});
-    var tIn=recs.filter(function(r){return r.type==="IN"||r.type==="OPENING";}).reduce(function(s,r){return s+Number(r.qty);},0);
+    var opW=recs.filter(function(r){return r.type==="OPENING";}).reduce(function(s,r){return s+Number(r.qty);},0);
+    var hasOpW=recs.some(function(r){return r.type==="OPENING";});
+    var tIn=recs.filter(function(r){return r.type==="IN";}).reduce(function(s,r){return s+Number(r.qty);},0);
     var tOut=recs.filter(function(r){return r.type==="OUT";}).reduce(function(s,r){return s+Number(r.qty);},0);
-    var open=bal;bal=open+tIn-tOut;
-    return {wk:i+1,s:w[0],e:Math.min(w[1],dim),open:open,tIn:tIn,tOut:tOut,close:bal};
+    var open=hasOpW?opW:bal;
+    bal=open+tIn-tOut;
+    return {wk:i+1,s:w[0],e:Math.min(w[1],dim),open:open,tIn:tIn,tOut:tOut,close:bal,reset:hasOpW};
   });
 }
 function getDaily(matId){
@@ -544,10 +567,15 @@ function getDaily(matId){
   for(var d=1;d<=dim;d++){
     var ds=ms+"-"+pad(d);
     var recs=state.records.filter(function(r){return r.material===matId&&r.date===ds;});
-    var tIn=recs.filter(function(r){return r.type==="IN"||r.type==="OPENING";}).reduce(function(s,r){return s+Number(r.qty);},0);
+    var opDay=recs.filter(function(r){return r.type==="OPENING";}).reduce(function(s,r){return s+Number(r.qty);},0);
+    var hasOpDay=recs.some(function(r){return r.type==="OPENING";});
+    var tIn=recs.filter(function(r){return r.type==="IN";}).reduce(function(s,r){return s+Number(r.qty);},0);
     var tOut=recs.filter(function(r){return r.type==="OUT";}).reduce(function(s,r){return s+Number(r.qty);},0);
-    var open=bal;bal=open+tIn-tOut;
-    out.push({d:d,ds:ds,day:dayName(ds),open:open,in:tIn,out:tOut,bal:bal,isToday:ds===tdy});
+    var open=bal;
+    // Kalau hari ni ada OPENING (stock check), RESET balance ke nilai opening, baru tolak/tambah IN/OUT hari tu.
+    if(hasOpDay)bal=opDay+tIn-tOut;
+    else bal=open+tIn-tOut;
+    out.push({d:d,ds:ds,day:dayName(ds),open:hasOpDay?opDay:open,in:tIn,out:tOut,bal:bal,isToday:ds===tdy,reset:hasOpDay});
   }
   return out;
 }
