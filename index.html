@@ -137,11 +137,14 @@
 <script>
 // ============ CONFIG ============
 var MATERIALS = [
-  { id:"Bubble Wrap",  unit:"bag",   color:"var(--blue)",  bg:"var(--blue-bg)",  pcsPerUnit:200, subUnit:"pcs" },
-  { id:"Glue Tribond", unit:"tubes", color:"var(--amber)", bg:"var(--amber-bg)", pcsPerUnit:0,   subUnit:"" },
-  { id:"NPC Grease",   unit:"pail",  color:"var(--green)", bg:"var(--green-bg)", pcsPerUnit:0,   subUnit:"" }
+  { id:"Bubble Wrap",  unit:"bag",   color:"var(--blue)",  bg:"var(--blue-bg)",  pcsPerUnit:200,  subUnit:"pcs", dailyUsage:4 },
+  { id:"Glue Tribond", unit:"tubes", color:"var(--amber)", bg:"var(--amber-bg)", pcsPerUnit:1020, subUnit:"pcs", dailyUsage:1 },
+  { id:"NPC Grease",   unit:"pail",  color:"var(--green)", bg:"var(--green-bg)", pcsPerUnit:15,   subUnit:"kg", dailyUsage:0.5 }
 ];
-var LINES = ["Door Mirror","Outer Handle","Pass Thru","Open Stay","Stock Baru Masuk","Other"];
+// Nota: dailyUsage = anggaran guna sehari (default) untuk satu line jalan.
+//   Bubble 4 bag · Glue 1 tube · Grease 0.5 (kg/hari, dalam unit pail = 0.5kg).
+//   Disimpan untuk kegunaan dashboard akan datang (forecast / reorder estimate).
+var LINES = ["L1 DM","L2 DM","Other"];
 var SHIFTS = ["Morning","Afternoon","Night"];
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -378,7 +381,7 @@ function recordView(){
     '<button class="qty-btn" onclick="stepQty(-1)">−</button>'+
     '<input class="qty-input mono" type="number" min="0" id="qtyInput" placeholder="0" value="'+f.qty+'" oninput="state.form.qty=this.value;updatePreview()">'+
     '<button class="qty-btn" onclick="stepQty(1)">+</button></div>'+
-    (m.pcsPerUnit?'<p class="mono" id="qtyPcs" style="font-size:11px;color:var(--muted);margin:6px 0 0;text-align:center">'+(Number(f.qty)?subQty(f.material,Number(f.qty))+' wrap':'1 '+m.unit+' = '+m.pcsPerUnit+' '+m.subUnit)+'</p>':'')+'</div>';
+    (m.pcsPerUnit?'<p class="mono" id="qtyPcs" style="font-size:11px;color:var(--muted);margin:6px 0 0;text-align:center">'+(Number(f.qty)?subQty(f.material,Number(f.qty)):'1 '+m.unit+' = '+m.pcsPerUnit.toLocaleString()+' '+m.subUnit)+'</p>':'')+'</div>';
   // preview
   h+='<div class="card" style="background:var(--surface2)"><div style="display:flex;justify-content:space-between;align-items:center">'+
     '<span style="font-size:12px;color:var(--muted)">Balance selepas save</span>'+
@@ -400,7 +403,7 @@ function updatePreview(){
   if(m.pcsPerUnit){
     var pp=document.getElementById("previewPcs"); if(pp)pp.textContent=subQty(m.id,nb);
     var qp=document.getElementById("qtyPcs");
-    if(qp)qp.textContent=Number(f.qty)?subQty(f.material,Number(f.qty))+' wrap':'1 '+m.unit+' = '+m.pcsPerUnit+' '+m.subUnit;
+    if(qp)qp.textContent=Number(f.qty)?subQty(f.material,Number(f.qty)):'1 '+m.unit+' = '+m.pcsPerUnit.toLocaleString()+' '+m.subUnit;
   }
 }
 function stepQty(d){
