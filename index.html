@@ -30,10 +30,26 @@
   .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);}
   .dot.on{background:var(--green);} .dot.off{background:var(--out);}
   /* Tabs */
-  .tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface2);
+  .tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface2);
     border-bottom:1px solid var(--line);position:sticky;top:53px;z-index:19;}
-  .tab{padding:9px 2px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
-    align-items:center;gap:3px;color:var(--muted);border-bottom:2px solid transparent;font-family:inherit;}
+  .tab{padding:9px 1px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
+    align-items:center;gap:3px;color:var(--muted);border-bottom:2px solid transparent;font-family:inherit;position:relative;}
+  .tab span{font-size:9.5px;}
+  .tab .dot{position:absolute;top:6px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--out);}
+  /* ---- Plan tab ---- */
+  .alert-bar{background:var(--out-bg);border:1px solid var(--out);border-radius:11px;padding:12px 14px;margin-bottom:12px;}
+  .alert-bar b{color:var(--out);font-size:13px;display:block;margin-bottom:3px;}
+  .alert-bar p{margin:0;font-size:12px;color:var(--text);line-height:1.5;}
+  .ftab{width:100%;border-collapse:collapse;font-size:12px;}
+  .ftab th{background:var(--surface2);color:var(--muted);font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;
+    padding:7px 6px;text-align:left;border-bottom:1px solid var(--line);}
+  .ftab td{padding:7px 6px;border-bottom:1px solid var(--line);color:var(--text);}
+  .ftab tr.warn td{background:var(--amber-bg);color:var(--amber);}
+  .ftab tr.crit td{background:var(--out-bg);color:var(--out);font-weight:600;}
+  .ftab tr.ship td{background:var(--blue-bg);}
+  .ftab .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .mini{font-size:11px;color:var(--muted);margin:6px 0 0;}
+  .btn-sm{padding:9px;font-size:13px;border-radius:9px;}
   .tab.active{color:var(--text);border-bottom-color:var(--text);}
   .tab svg{width:18px;height:18px;}
   .tab span{font-size:8.5px;font-weight:600;letter-spacing:.2px;}
@@ -123,6 +139,10 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
     <span>Tukar Data</span>
   </button>
+  <button class="tab" data-tab="plan" onclick="go('plan')" id="tabPlan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+    <span>Plan</span>
+  </button>
   <button class="tab" data-tab="history" onclick="go('history')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.3 2.6L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 3"/></svg>
     <span>History</span>
@@ -146,6 +166,11 @@ var MATERIALS = [
 // Nota: dailyUsage = anggaran guna sehari (default) untuk satu line jalan.
 //   Bubble 4 bag · Glue 1 tube · Grease 0.5 (kg/hari, dalam unit pail = 0.5kg).
 //   Disimpan untuk kegunaan dashboard akan datang (forecast / reorder estimate).
+// ---- Tab PLAN: material yang di-cover (buat masa ni Bubble Wrap sahaja) ----
+var PLAN_MATERIAL = "Bubble Wrap";
+var PLAN_DEFAULTS = { safetyStock:12, shipmentSize:15, leadTime:10, alertEmail:"" };
+var PLAN_HORIZON = 45; // berapa hari kerja nak unjur ke depan
+
 var LINES = ["Door Mirror","Outer Handle","Pass Thru","Open Stay","Stock Baru Masuk","Other"];
 var SHIFTS = ["Morning","Afternoon","Night"];
 var MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -155,7 +180,10 @@ var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 var state = {
   tab:"home", records:[], openings:{}, loading:true, online:false,
   form:{ material:"Bubble Wrap", date:today(), shift:"Morning", line:"L1 DM", operator:"", type:"OUT", qty:"", remarks:"" },
-  histFilter:"all", repMat:"Bubble Wrap", repView:"weekly", saving:false, editDate:today()
+  histFilter:"all", repMat:"Bubble Wrap", repView:"weekly", saving:false, editDate:today(),
+  // ---- tab Plan ----
+  config:{}, plan:[], delivery:[], planSection:"forecast",
+  planForm:{ from:today(), to:"", pcs:"700" }
 };
 
 function today(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -163,6 +191,8 @@ function pad(n){return String(n).padStart(2,"0");}
 function mKey(ds){return ds.slice(0,7);}
 function dayName(ds){return DAYS[new Date(ds+"T12:00:00").getDay()];}
 function mat(id){return MATERIALS.find(function(m){return m.id===id;});}
+// Papar nombor kemas: 15 -> "15", 12.4 -> "12.4"
+function fmt(n){n=Number(n)||0;return (Math.round(n*10)/10).toString();}
 // Pulangkan string "= X pcs" kalau material ada conversion, else "".
 function subQty(matId,qty){
   var m=mat(matId);
@@ -181,6 +211,15 @@ function apiList(){
 function apiSave(rec){
   return fetch(API_URL,{method:"POST",body:JSON.stringify(rec)}).then(function(r){return r.json();});
 }
+function apiMeta(){
+  return fetch(API_URL+"?action=meta").then(function(r){return r.json();});
+}
+function apiPost(obj){
+  return fetch(API_URL,{method:"POST",body:JSON.stringify(obj)}).then(function(r){return r.json();});
+}
+function apiDeleteDelivery(id){
+  return fetch(API_URL+"?action=deleteDelivery&id="+encodeURIComponent(id)).then(function(r){return r.json();});
+}
 function apiDelete(id){
   return fetch(API_URL+"?action=delete&id="+encodeURIComponent(id)).then(function(r){return r.json();});
 }
@@ -194,11 +233,29 @@ function setConn(on){
 
 function refresh(){
   if(API_URL.indexOf("PASTE_")===0){state.loading=false;render();return;}
-  return apiList().then(function(res){
-    if(res.ok){state.records=res.records||[];setConn(true);}
-    else setConn(false);
-    state.loading=false;render();
-  }).catch(function(){setConn(false);state.loading=false;render();});
+  return Promise.all([apiList(),apiMeta().catch(function(){return {ok:false};})])
+    .then(function(res){
+      var list=res[0], meta=res[1];
+      if(list.ok){state.records=list.records||[];setConn(true);}
+      else setConn(false);
+      if(meta&&meta.ok)loadMeta(meta);
+      state.loading=false;render();
+    }).catch(function(){setConn(false);state.loading=false;render();});
+}
+function loadMeta(meta){
+  state.config=meta.config||{};
+  state.plan=meta.plan||[];
+  state.delivery=meta.delivery||[];
+}
+// Config utk material Plan — guna nilai dari Sheet, fallback ke default.
+function planCfg(){
+  var c=state.config[PLAN_MATERIAL]||{};
+  return {
+    safetyStock: c.safetyStock||PLAN_DEFAULTS.safetyStock,
+    shipmentSize: c.shipmentSize||PLAN_DEFAULTS.shipmentSize,
+    leadTime: c.leadTime||PLAN_DEFAULTS.leadTime,
+    alertEmail: c.alertEmail||PLAN_DEFAULTS.alertEmail
+  };
 }
 
 // Manual sync — dipanggil bila user tekan button Sync. Bagi feedback jelas.
@@ -250,19 +307,29 @@ function getOpeningDate(matId){
   var op=latestOpening(matId);
   return op?op.date:undefined;
 }
-// Balance = opening terkini + (IN − OUT) dari tarikh opening ke 'end'. Entry sebelum opening diabaikan.
-function calcBalance(matId,end){
+// Baki pada tarikh 'end' — guna OPENING TERKINI yang <= end sebagai anchor.
+// (Penting: opening selepas 'end' tidak boleh jadi anchor, kalau tidak baki sejarah jadi salah.)
+function balanceAsOf(matId,end){
   end=end||today();
-  var op=latestOpening(matId);
-  var base=op?Number(op.qty):0;
-  var fromDate=op?op.date:"0000-00-00";
-  // ambil IN/OUT dari tarikh opening (inklusif) sehingga 'end'. OPENING sendiri tak dikira lagi (dah jadi base).
+  var ops=state.records.filter(function(r){
+    return r.material===matId&&r.type==="OPENING"&&r.date&&r.date<=end;
+  });
+  ops.sort(function(a,b){
+    if(a.date!==b.date)return a.date<b.date?1:-1;
+    return new Date(b.timestamp||0)-new Date(a.timestamp||0);
+  });
+  var base=ops.length?Number(ops[0].qty):0;
+  var from=ops.length?ops[0].date:"0000-00-00";
   var recs=state.records.filter(function(r){
-    return r.material===matId&&r.date&&r.date>=fromDate&&r.date<=end&&(r.type==="IN"||r.type==="OUT");
+    return r.material===matId&&r.date&&r.date>=from&&r.date<=end&&(r.type==="IN"||r.type==="OUT");
   });
   var inT=recs.filter(function(r){return r.type==="IN";}).reduce(function(s,r){return s+Number(r.qty);},0);
   var outT=recs.filter(function(r){return r.type==="OUT";}).reduce(function(s,r){return s+Number(r.qty);},0);
   return base+inT-outT;
+}
+// Balance = opening terkini + (IN − OUT) dari tarikh opening ke 'end'. Entry sebelum opening diabaikan.
+function calcBalance(matId,end){
+  return balanceAsOf(matId,end||today());
 }
 function todayStat(matId,type){
   return state.records.filter(function(r){return r.material===matId&&r.date===today()&&r.type===type;})
@@ -298,8 +365,25 @@ function render(){
   if(state.tab==="home")c.innerHTML=homeView();
   else if(state.tab==="record")c.innerHTML=recordView();
   else if(state.tab==="edit")c.innerHTML=editView();
+  else if(state.tab==="plan")c.innerHTML=planView();
   else if(state.tab==="history")c.innerHTML=historyView();
   else if(state.tab==="report")c.innerHTML=reportView();
+  updatePlanBadge();
+}
+
+// Titik merah kat tab Plan bila baki <= safety stock
+function updatePlanBadge(){
+  var tab=document.getElementById("tabPlan");
+  if(!tab)return;
+  var old=tab.querySelector(".dot");
+  if(old)old.remove();
+  if(state.loading||!state.records.length)return;
+  var cfg=planCfg();
+  if(calcBalance(PLAN_MATERIAL)<=cfg.safetyStock){
+    var d=document.createElement("span");
+    d.className="dot";
+    tab.appendChild(d);
+  }
 }
 
 function homeView(){
@@ -548,7 +632,8 @@ function historyView(){
 function getWeekly(matId){
   var now=new Date(),y=now.getFullYear(),mo=now.getMonth();
   var ms=y+"-"+pad(mo+1),dim=new Date(y,mo+1,0).getDate();
-  var bal=0;
+  // Baki bawa masuk dari bulan sebelum (bukan 0).
+  var bal=balanceAsOf(matId,dAdd(ms+"-01",-1));
   var weeks=[[1,7],[8,14],[15,21],[22,28],[29,31]].filter(function(w){return w[0]<=dim;});
   return weeks.map(function(w,i){
     var from=ms+"-"+pad(w[0]),to=ms+"-"+pad(Math.min(w[1],dim));
@@ -565,7 +650,9 @@ function getWeekly(matId){
 function getDaily(matId){
   var now=new Date(),y=now.getFullYear(),mo=now.getMonth();
   var ms=y+"-"+pad(mo+1),dim=new Date(y,mo+1,0).getDate();
-  var bal=0,tdy=today(),out=[];
+  // Baki BAWA MASUK dari sebelum bulan ni (bukan 0) — kalau tidak, Report jadi negatif.
+  var bal=balanceAsOf(matId,dAdd(ms+"-01",-1));
+  var tdy=today(),out=[];
   for(var d=1;d<=dim;d++){
     var ds=ms+"-"+pad(d);
     var recs=state.records.filter(function(r){return r.material===matId&&r.date===ds;});
@@ -580,6 +667,266 @@ function getDaily(matId){
     out.push({d:d,ds:ds,day:dayName(ds),open:hasOpDay?opDay:open,in:tIn,out:tOut,bal:bal,isToday:ds===tdy,reset:hasOpDay});
   }
   return out;
+}
+
+// ================= PLAN: enjin forecast =================
+function dAdd(ds,n){var d=new Date(ds+"T00:00:00");d.setDate(d.getDate()+n);
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function isWorkday(ds){var w=new Date(ds+"T00:00:00").getDay();return w>=1&&w<=5;}
+
+// Plan pcs utk satu tarikh. Kalau takde plan, guna purata plan sedia ada; kalau langsung takde, guna default.
+function planPcsFor(ds){
+  var hit=state.plan.filter(function(p){return p.material===PLAN_MATERIAL&&p.date===ds;});
+  if(hit.length)return Number(hit[0].planPcs)||0;
+  var all=state.plan.filter(function(p){return p.material===PLAN_MATERIAL&&p.planPcs>0;});
+  if(all.length)return all.reduce(function(s,p){return s+Number(p.planPcs);},0)/all.length;
+  return 0;
+}
+// Guna/hari dalam UNIT (bag) — dari plan pcs ÷ pcsPerUnit. Fallback ke dailyUsage material.
+function usageFor(ds){
+  var m=mat(PLAN_MATERIAL);
+  var pcs=planPcsFor(ds);
+  if(pcs>0&&m.pcsPerUnit)return pcs/m.pcsPerUnit;
+  return m.dailyUsage||0;
+}
+function deliveryOn(ds){
+  return state.delivery.filter(function(d){return d.material===PLAN_MATERIAL&&d.date===ds;})
+    .reduce(function(s,d){return s+Number(d.qty);},0);
+}
+
+/**
+ * Unjuran ke depan. Pulangkan { rows, suggest, runoutDate }
+ *  rows   = [{ds,use,deliv,bal,warn,crit}]  (guna delivery yg DAH disimpan)
+ *  suggest= [tarikh] cadangan bila supplier kena hantar (kalau ikut delivery sedia ada tak cukup)
+ */
+function forecast(){
+  var cfg=planCfg();
+  var bal=calcBalance(PLAN_MATERIAL);
+  var simBal=bal;              // untuk cadangan (auto-ship)
+  var rows=[], suggest=[], runout=null;
+  var ds=today(), count=0, guard=0;
+
+  while(count<PLAN_HORIZON&&guard<200){
+    guard++;
+    if(!isWorkday(ds)){ds=dAdd(ds,1);continue;}
+    var use=usageFor(ds);
+    var deliv=deliveryOn(ds);
+
+    // baris sebenar (ikut delivery yang dah disimpan)
+    bal=bal+deliv-use;
+    if(bal<=0&&!runout)runout=ds;
+
+    // simulasi cadangan: kalau baki akan jatuh bawah safety, shipment kena sampai hari ni
+    var shipToday=0;
+    var afterUse=simBal+deliv-use;
+    if(afterUse<cfg.safetyStock&&cfg.shipmentSize>0){
+      shipToday=cfg.shipmentSize;
+      suggest.push(ds);
+    }
+    simBal=simBal+deliv+shipToday-use;
+
+    rows.push({ds:ds,use:use,deliv:deliv,bal:bal,
+      warn:(bal>0&&bal<=cfg.safetyStock),crit:(bal<=0)});
+    count++; ds=dAdd(ds,1);
+  }
+  return {rows:rows,suggest:suggest,runout:runout,startBal:calcBalance(PLAN_MATERIAL),cfg:cfg};
+}
+
+// ================= PLAN: paparan =================
+function planView(){
+  var m=mat(PLAN_MATERIAL), f=forecast(), cfg=f.cfg;
+  var bal=f.startBal;
+  var avgUse=usageFor(today());
+  var daysLeft=avgUse>0?(bal/avgUse):0;
+  var status = bal<=0 ? "STOK HABIS" : (bal<=cfg.safetyStock ? "HANTAR SEGERA" : (bal<=cfg.safetyStock*1.3 ? "PANTAU" : "OK"));
+  var sc = status==="OK"?"var(--green)":(status==="PANTAU"?"var(--amber)":"var(--out)");
+
+  var h="";
+
+  // ---- Alert banner ----
+  if(bal<=cfg.safetyStock){
+    h+='<div class="alert-bar"><b>⚠️ '+PLAN_MATERIAL+' bawah safety stock</b>'+
+       '<p>Baki <b>'+fmt(bal)+' '+m.unit+'</b> · safety stock '+cfg.safetyStock+' '+m.unit+
+       (avgUse>0?' · jangkaan habis dalam <b>'+Math.max(0,Math.floor(daysLeft))+' hari kerja</b>':'')+
+       '<br>Sila buat work order / hubungi supplier.</p></div>';
+  }
+
+  // ---- Ringkasan ----
+  h+='<div class="card">'+
+     '<div class="row2" style="margin-bottom:10px">'+
+       '<div><span class="lbl">Baki semasa</span><div class="mono" style="font-size:22px;font-weight:600;color:'+m.color+'">'+fmt(bal)+' <span style="font-size:12px;color:var(--muted)">'+m.unit+'</span></div></div>'+
+       '<div><span class="lbl">Status</span><div style="font-size:15px;font-weight:600;color:'+sc+'">'+status+'</div></div>'+
+     '</div>'+
+     '<div class="row2">'+
+       '<div><span class="lbl">Guna/hari (plan)</span><div class="mono">'+avgUse.toFixed(1)+' '+m.unit+'</div></div>'+
+       '<div><span class="lbl">Hari lagi</span><div class="mono">'+(avgUse>0?Math.max(0,Math.floor(daysLeft))+" hari":"—")+'</div></div>'+
+     '</div>'+
+     (f.runout?'<p class="mini">⚠️ Stok jangkaan habis pada <b>'+f.runout+'</b> (kalau tiada delivery baru)</p>':'')+
+     '</div>';
+
+  // ---- Pills tukar seksyen ----
+  var secs=[["forecast","Forecast"],["plan","Plan Produksi"],["delivery","Delivery"],["setting","Setting"]];
+  h+='<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px">'+
+     secs.map(function(s){
+       var on=state.planSection===s[0];
+       return '<button class="pill" onclick="state.planSection=\''+s[0]+'\';render()" style="'+
+         (on?'background:var(--text);color:var(--bg);border-color:var(--text)':'')+'">'+s[1]+'</button>';
+     }).join('')+'</div>';
+
+  if(state.planSection==="forecast")      h+=planForecastSec(f,m);
+  else if(state.planSection==="plan")     h+=planInputSec(m);
+  else if(state.planSection==="delivery") h+=planDeliverySec(f,m);
+  else                                    h+=planSettingSec(cfg,m);
+
+  return h;
+}
+
+function planForecastSec(f,m){
+  if(!f.rows.length)return '<div class="empty"><p>Tiada unjuran.</p></div>';
+  var h='<div class="card"><span class="lbl">Unjuran baki — '+PLAN_MATERIAL+'</span>'+
+    '<div style="overflow-x:auto"><table class="ftab"><thead><tr>'+
+    '<th>Tarikh</th><th>Hari</th><th class="num">Guna</th><th class="num">Masuk</th><th class="num">Baki</th>'+
+    '</tr></thead><tbody>';
+  f.rows.slice(0,25).forEach(function(r){
+    var cls=r.crit?"crit":(r.warn?"warn":(r.deliv>0?"ship":""));
+    h+='<tr class="'+cls+'"><td class="mono">'+r.ds.slice(5)+'</td><td>'+dayName(r.ds)+'</td>'+
+       '<td class="num mono">'+(r.use?r.use.toFixed(1):"—")+'</td>'+
+       '<td class="num mono">'+(r.deliv?"+"+r.deliv:"—")+'</td>'+
+       '<td class="num mono"><b>'+fmt(r.bal)+'</b></td></tr>';
+  });
+  h+='</tbody></table></div>'+
+     '<p class="mini">🟡 kuning = bawah safety stock · 🔴 merah = stok habis · 🔵 biru = delivery masuk</p></div>';
+  return h;
+}
+
+function planInputSec(m){
+  var pf=state.planForm;
+  var existing=state.plan.filter(function(p){return p.material===PLAN_MATERIAL;}).length;
+  return '<div class="card"><span class="lbl">Set plan produksi (hari kerja sahaja)</span>'+
+    '<div class="row2" style="margin-bottom:10px">'+
+      '<div><span class="lbl">Dari</span><input type="date" value="'+pf.from+'" onchange="state.planForm.from=this.value"></div>'+
+      '<div><span class="lbl">Hingga</span><input type="date" value="'+pf.to+'" onchange="state.planForm.to=this.value"></div>'+
+    '</div>'+
+    '<span class="lbl">Plan produksi (pcs sehari)</span>'+
+    '<input type="number" min="0" value="'+pf.pcs+'" oninput="state.planForm.pcs=this.value" placeholder="700">'+
+    '<p class="mini">'+ (m.pcsPerUnit? '1 '+m.unit+' = '+m.pcsPerUnit.toLocaleString()+' '+m.subUnit+
+      ' → '+(Number(pf.pcs)&&m.pcsPerUnit?(Number(pf.pcs)/m.pcsPerUnit).toFixed(2)+' '+m.unit+'/hari':'') : '')+'</p>'+
+    '<button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="savePlanRange()">Simpan Plan</button>'+
+    '<p class="mini">Plan tersimpan: <b>'+existing+' hari</b>. Sabtu &amp; Ahad diskip automatik.</p>'+
+    '</div>';
+}
+
+function planDeliverySec(f,m){
+  var cfg=f.cfg;
+  var saved=state.delivery.filter(function(d){return d.material===PLAN_MATERIAL;})
+    .sort(function(a,b){return a.date<b.date?-1:1;});
+
+  var h='<div class="card"><span class="lbl">Cadangan tarikh supplier hantar ('+cfg.shipmentSize+' '+m.unit+' setiap kali)</span>';
+  if(!f.suggest.length){
+    h+='<p class="mini" style="color:var(--green)">✓ Stok mencukupi — tiada delivery diperlukan dalam tempoh unjuran.</p>';
+  }else{
+    h+='<div style="overflow-x:auto"><table class="ftab"><thead><tr><th>Tarikh</th><th>Hari</th><th class="num">Qty</th><th></th></tr></thead><tbody>';
+    f.suggest.slice(0,8).forEach(function(ds,i){
+      h+='<tr'+(i<1?' class="crit"':'')+'><td class="mono">'+ds+'</td><td>'+dayName(ds)+'</td>'+
+         '<td class="num mono">'+cfg.shipmentSize+'</td>'+
+         '<td><button class="pill" onclick="addDelivery(\''+ds+'\','+cfg.shipmentSize+')">+ Simpan</button></td></tr>';
+    });
+    h+='</tbody></table></div><p class="mini">Tekan "+ Simpan" untuk masukkan delivery ke jadual (forecast akan kira semula).</p>';
+  }
+  h+='</div>';
+
+  h+='<div class="card"><span class="lbl">Delivery disimpan</span>';
+  if(!saved.length)h+='<p class="mini">Belum ada delivery disimpan.</p>';
+  else{
+    h+='<div style="overflow-x:auto"><table class="ftab"><thead><tr><th>Tarikh</th><th class="num">Qty</th><th>Status</th><th></th></tr></thead><tbody>';
+    saved.forEach(function(d){
+      h+='<tr class="ship"><td class="mono">'+d.date+'</td><td class="num mono">+'+d.qty+'</td>'+
+         '<td>'+(d.status||"Planned")+'</td>'+
+         '<td><button class="pill" onclick="delDelivery(\''+d.id+'\')" style="color:var(--out)">Padam</button></td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function planSettingSec(cfg,m){
+  return '<div class="card"><span class="lbl">Setting — '+PLAN_MATERIAL+'</span>'+
+    '<div class="row2" style="margin-bottom:10px">'+
+      '<div><span class="lbl">Safety stock ('+m.unit+')</span><input type="number" min="0" id="cfgSafety" value="'+cfg.safetyStock+'"></div>'+
+      '<div><span class="lbl">Saiz 1 shipment</span><input type="number" min="0" id="cfgShip" value="'+cfg.shipmentSize+'"></div>'+
+    '</div>'+
+    '<div class="row2" style="margin-bottom:10px">'+
+      '<div><span class="lbl">Lead time (hari)</span><input type="number" min="0" id="cfgLead" value="'+cfg.leadTime+'"></div>'+
+      '<div><span class="lbl">Email alert</span><input type="email" id="cfgEmail" value="'+(cfg.alertEmail||"")+'" placeholder="nama@syarikat.com"></div>'+
+    '</div>'+
+    '<button class="btn btn-primary btn-sm" onclick="savePlanConfig()">Simpan Setting</button>'+
+    '<p class="mini">Email alert: Apps Script akan hantar email bila baki ≤ safety stock (perlu set trigger harian sekali — lihat panduan).</p>'+
+    '</div>';
+}
+
+// ---- Aksi tab Plan ----
+function savePlanRange(){
+  var pf=state.planForm, m=mat(PLAN_MATERIAL);
+  var pcs=Number(pf.pcs);
+  if(!pf.from||!pf.to){toast("Isi tarikh Dari & Hingga",false);return;}
+  if(pf.to<pf.from){toast("Tarikh Hingga mesti selepas Dari",false);return;}
+  if(!(pcs>=0)){toast("Plan pcs tidak sah",false);return;}
+  var rows=[], ds=pf.from, guard=0;
+  while(ds<=pf.to&&guard<400){guard++;
+    if(isWorkday(ds))rows.push({date:ds,planPcs:pcs});
+    ds=dAdd(ds,1);
+  }
+  if(!rows.length){toast("Tiada hari kerja dalam julat tu",false);return;}
+  toast("Menyimpan plan…",true);
+  apiPost({kind:"plan",material:PLAN_MATERIAL,rows:rows}).then(function(res){
+    if(res.ok){
+      state.plan=state.plan.filter(function(p){
+        return !(p.material===PLAN_MATERIAL&&rows.some(function(r){return r.date===p.date;}));
+      });
+      rows.forEach(function(r){state.plan.push({date:r.date,material:PLAN_MATERIAL,planPcs:pcs});});
+      setConn(true);toast("Plan disimpan ✓ ("+rows.length+" hari)",true);render();
+    }else toast("Gagal: "+(res.error||"cuba lagi"),false);
+  }).catch(function(){toast("Tiada internet",false);setConn(false);});
+}
+
+function savePlanConfig(){
+  var g=function(id){var e=document.getElementById(id);return e?e.value:"";};
+  var body={kind:"config",material:PLAN_MATERIAL,
+    safetyStock:Number(g("cfgSafety"))||0, shipmentSize:Number(g("cfgShip"))||0,
+    leadTime:Number(g("cfgLead"))||0, alertEmail:g("cfgEmail")};
+  toast("Menyimpan setting…",true);
+  apiPost(body).then(function(res){
+    if(res.ok){
+      state.config[PLAN_MATERIAL]={safetyStock:body.safetyStock,shipmentSize:body.shipmentSize,
+        leadTime:body.leadTime,alertEmail:body.alertEmail};
+      setConn(true);toast("Setting disimpan ✓",true);render();
+    }else toast("Gagal: "+(res.error||"cuba lagi"),false);
+  }).catch(function(){toast("Tiada internet",false);setConn(false);});
+}
+
+function addDelivery(ds,qty){
+  var m=mat(PLAN_MATERIAL);
+  var id=String(Date.now())+"_"+Math.floor(Math.random()*1000);
+  toast("Menyimpan delivery…",true);
+  apiPost({kind:"delivery",id:id,material:PLAN_MATERIAL,date:ds,qty:qty,unit:m.unit,status:"Planned",remarks:"Dari cadangan forecast"})
+  .then(function(res){
+    if(res.ok){
+      state.delivery.push({id:id,material:PLAN_MATERIAL,date:ds,qty:qty,unit:m.unit,status:"Planned",remarks:""});
+      setConn(true);toast("Delivery ditambah ✓",true);render();
+    }else toast("Gagal: "+(res.error||"cuba lagi"),false);
+  }).catch(function(){toast("Tiada internet",false);setConn(false);});
+}
+
+function delDelivery(id){
+  if(!confirm("Padam delivery ni?"))return;
+  toast("Memadam…",true);
+  apiDeleteDelivery(id).then(function(res){
+    if(res.ok){
+      state.delivery=state.delivery.filter(function(d){return d.id!==id;});
+      setConn(true);toast("Delivery dipadam ✓",true);render();
+    }else toast("Gagal: "+(res.error||"cuba lagi"),false);
+  }).catch(function(){toast("Tiada internet",false);setConn(false);});
 }
 
 function reportView(){
