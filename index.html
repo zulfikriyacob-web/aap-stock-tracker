@@ -704,7 +704,9 @@ function forecast(){
   var bal=calcBalance(PLAN_MATERIAL);
   var simBal=bal;              // untuk cadangan (auto-ship)
   var rows=[], suggest=[], runout=null;
-  var ds=today(), count=0, guard=0;
+  // Mula dari HARI ESOK — baki semasa dah termasuk penggunaan hari ni.
+  // (Kalau mula hari ni, guna hari ni dikira dua kali.)
+  var ds=dAdd(today(),1), count=0, guard=0;
 
   while(count<PLAN_HORIZON&&guard<200){
     guard++;
