@@ -7,156 +7,393 @@
 <title>AAP Stock Tracker — DM Line</title>
 <style>
   :root{
-    --bg:#0f1419; --surface:#1a2330; --surface2:#222d3d; --line:#2d3a4d;
-    --text:#e8edf3; --muted:#8a98ac; --faint:#5a6878;
-    --blue:#3b82d6; --blue-bg:#16293f;
-    --amber:#e0992c; --amber-bg:#322611;
-    --green:#4ca866; --green-bg:#152a1c;
-    --in:#4ca866; --in-bg:#152a1c;
-    --out:#d65a4c; --out-bg:#341813;
-    --info:#3b82d6;
+    --bg:#07111f;
+    --bg-elevated:#0b1728;
+    --surface:#0f1d30;
+    --surface2:#14243a;
+    --surface3:#192b44;
+    --glass:rgba(15,29,48,.82);
+    --line:rgba(148,163,184,.16);
+    --line-strong:rgba(148,163,184,.28);
+    --text:#f4f7fb;
+    --muted:#9aabc0;
+    --faint:#63758b;
+    --blue:#58a6ff;
+    --blue-strong:#2f80ed;
+    --blue-bg:rgba(47,128,237,.14);
+    --amber:#f7b955;
+    --amber-bg:rgba(247,185,85,.13);
+    --green:#54d38a;
+    --green-bg:rgba(84,211,138,.13);
+    --in:#54d38a;
+    --in-bg:rgba(84,211,138,.13);
+    --out:#ff786b;
+    --out-bg:rgba(255,120,107,.13);
+    --info:#58a6ff;
+    --purple:#b995ff;
+    --shadow:0 20px 55px rgba(0,0,0,.24);
+    --shadow-soft:0 10px 28px rgba(0,0,0,.16);
+    --radius-xl:22px;
+    --radius-lg:16px;
+    --radius-md:12px;
+    --sidebar:264px;
+    --topbar:78px;
+  }
+  html[data-theme="light"]{
+    --bg:#eef3f9;
+    --bg-elevated:#f8fafc;
+    --surface:#ffffff;
+    --surface2:#f3f6fa;
+    --surface3:#e8eef6;
+    --glass:rgba(255,255,255,.86);
+    --line:rgba(15,23,42,.10);
+    --line-strong:rgba(15,23,42,.18);
+    --text:#132238;
+    --muted:#617087;
+    --faint:#8b98aa;
+    --blue:#1e73d8;
+    --blue-strong:#175eb2;
+    --blue-bg:rgba(30,115,216,.10);
+    --amber:#b8750d;
+    --amber-bg:rgba(184,117,13,.10);
+    --green:#17834a;
+    --green-bg:rgba(23,131,74,.10);
+    --in:#17834a;
+    --in-bg:rgba(23,131,74,.10);
+    --out:#cf4337;
+    --out-bg:rgba(207,67,55,.10);
+    --purple:#7757bf;
+    --shadow:0 18px 45px rgba(34,53,79,.10);
+    --shadow-soft:0 8px 24px rgba(34,53,79,.08);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg);color:var(--text);max-width:520px;margin:0 auto;min-height:100vh;
-    font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased;}
-  .mono{font-family:ui-monospace,"SF Mono","Roboto Mono",Menlo,monospace;}
-  /* Header */
-  .hdr{background:var(--surface);border-bottom:1px solid var(--line);padding:12px 16px;
-    position:sticky;top:0;z-index:20;}
-  .hdr .eyebrow{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);}
-  .hdr .title{font-size:16px;font-weight:600;margin-top:2px;display:flex;align-items:center;justify-content:space-between;}
-  .conn{display:flex;align-items:center;gap:5px;font-size:9px;letter-spacing:.5px;}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);}
-  .dot.on{background:var(--green);} .dot.off{background:var(--out);}
-  /* Tabs */
-  .tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface2);
-    border-bottom:1px solid var(--line);position:sticky;top:53px;z-index:19;}
-  .tab{padding:9px 1px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;
-    align-items:center;gap:3px;color:var(--muted);border-bottom:2px solid transparent;font-family:inherit;position:relative;}
-  .tab span{font-size:9.5px;}
-  .tab .dot{position:absolute;top:6px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--out);}
-  /* ---- Plan tab ---- */
-  .alert-bar{background:var(--out-bg);border:1px solid var(--out);border-radius:11px;padding:12px 14px;margin-bottom:12px;}
-  .alert-bar b{color:var(--out);font-size:13px;display:block;margin-bottom:3px;}
-  .alert-bar p{margin:0;font-size:12px;color:var(--text);line-height:1.5;}
-  .ftab{width:100%;border-collapse:collapse;font-size:12px;}
-  .ftab th{background:var(--surface2);color:var(--muted);font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;
-    padding:7px 6px;text-align:left;border-bottom:1px solid var(--line);}
-  .ftab td{padding:7px 6px;border-bottom:1px solid var(--line);color:var(--text);}
+  html{scroll-behavior:smooth;background:var(--bg);}
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 8% 0%,rgba(47,128,237,.12),transparent 30%),
+      radial-gradient(circle at 100% 18%,rgba(84,211,138,.08),transparent 24%),
+      var(--bg);
+    font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  button,input,select{font:inherit;}
+  button{touch-action:manipulation;}
+  .mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .app-shell{min-height:100vh;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);}
+  .sidebar{
+    position:sticky;top:0;height:100vh;z-index:40;
+    display:flex;flex-direction:column;padding:22px 16px;
+    background:linear-gradient(180deg,rgba(11,23,40,.98),rgba(7,17,31,.96));
+    border-right:1px solid var(--line);
+    overflow:hidden;
+  }
+  html[data-theme="light"] .sidebar{background:linear-gradient(180deg,#ffffff,#f4f7fb);}
+  .sidebar:before{content:"";position:absolute;inset:-120px auto auto -100px;width:260px;height:260px;border-radius:50%;background:rgba(47,128,237,.13);filter:blur(12px);pointer-events:none;}
+  .brand{position:relative;display:flex;align-items:center;gap:12px;padding:4px 8px 24px;}
+  .brand-mark{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(145deg,var(--blue),var(--blue-strong));box-shadow:0 12px 30px rgba(47,128,237,.28);color:#fff;font-weight:900;letter-spacing:-.7px;}
+  .brand-copy strong{display:block;font-size:14px;letter-spacing:.2px;}
+  .brand-copy span{display:block;font-size:10px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-top:1px;}
+  .nav-label{padding:0 10px 8px;font-size:9px;font-weight:800;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase;}
+  .tabs{display:flex;flex-direction:column;gap:5px;}
+  .tab{
+    position:relative;width:100%;min-height:46px;padding:0 12px;border:1px solid transparent;border-radius:12px;
+    display:flex;align-items:center;gap:12px;background:transparent;color:var(--muted);cursor:pointer;text-align:left;
+    transition:background .2s ease,border-color .2s ease,color .2s ease,transform .2s ease;
+  }
+  .tab:hover{background:var(--surface2);color:var(--text);transform:translateX(2px);}
+  .tab.active{background:linear-gradient(135deg,var(--blue-bg),rgba(88,166,255,.05));border-color:rgba(88,166,255,.22);color:var(--blue);box-shadow:inset 3px 0 0 var(--blue);}
+  .tab svg{width:19px;height:19px;flex:0 0 auto;}
+  .tab span{font-size:12px;font-weight:700;letter-spacing:.1px;}
+  .tab .dot{position:absolute;right:12px;top:10px;width:7px;height:7px;border-radius:999px;background:var(--out);box-shadow:0 0 0 4px var(--out-bg);}
+  .sidebar-foot{margin-top:auto;padding:14px 8px 2px;}
+  .system-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);}
+  .system-card .eyebrow{font-size:9px;color:var(--faint);font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+  .conn{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:10px;font-weight:800;letter-spacing:.7px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 4px rgba(99,117,139,.12);}
+  .dot.on{background:var(--green);box-shadow:0 0 0 4px var(--green-bg);}
+  .dot.off{background:var(--out);box-shadow:0 0 0 4px var(--out-bg);}
+  .workspace{min-width:0;}
+  .topbar{
+    position:sticky;top:0;z-index:30;height:var(--topbar);padding:0 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    background:var(--glass);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-bottom:1px solid var(--line);
+  }
+  .page-heading{min-width:0;}
+  .page-heading h1{margin:0;font-size:20px;line-height:1.2;letter-spacing:-.35px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .page-heading p{margin:4px 0 0;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .top-actions{display:flex;align-items:center;gap:9px;}
+  .clock-chip,.icon-btn,.top-sync{
+    height:40px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--muted);
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow-soft);
+  }
+  .clock-chip{padding:0 13px;font-size:11px;}
+  .icon-btn{width:40px;cursor:pointer;}
+  .top-sync{padding:0 14px;cursor:pointer;color:var(--text);font-size:11px;font-weight:800;}
+  .icon-btn:hover,.top-sync:hover{border-color:var(--line-strong);background:var(--surface2);}
+  .icon-btn svg,.top-sync svg{width:16px;height:16px;}
+  .main{min-width:0;padding:26px 28px 56px;}
+  .content{max-width:1440px;margin:0 auto;}
+  .content.view-enter{animation:viewIn .42s cubic-bezier(.22,.61,.36,1) both;}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .content.view-enter>.stagger-item,.content.view-enter>.card,.content.view-enter>.kpi-grid,.content.view-enter>.material-grid,.content.view-enter>.home-lower{animation:staggerIn .48s both;}
+  .content.view-enter>*:nth-child(2){animation-delay:.045s}.content.view-enter>*:nth-child(3){animation-delay:.09s}.content.view-enter>*:nth-child(4){animation-delay:.135s}.content.view-enter>*:nth-child(5){animation-delay:.18s}
+  @keyframes staggerIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .page-intro{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 26px;margin-bottom:18px;border:1px solid rgba(88,166,255,.18);border-radius:var(--radius-xl);background:linear-gradient(125deg,rgba(47,128,237,.18),rgba(15,29,48,.85) 48%,rgba(84,211,138,.07));box-shadow:var(--shadow);}
+  html[data-theme="light"] .page-intro{background:linear-gradient(125deg,rgba(30,115,216,.12),#fff 50%,rgba(23,131,74,.06));}
+  .page-intro:after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;right:-90px;top:-150px;background:rgba(88,166,255,.12);filter:blur(3px);}
+  .intro-copy{position:relative;z-index:1;}
+  .intro-copy .overline{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);}
+  .intro-copy h2{font-size:25px;line-height:1.15;letter-spacing:-.55px;margin:7px 0 7px;}
+  .intro-copy p{margin:0;color:var(--muted);font-size:12px;max-width:620px;}
+  .intro-actions{position:relative;z-index:1;display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;}
+  .btn,.pill,.seg-btn,.qty-btn{transition:transform .15s ease,background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;}
+  .btn{min-height:46px;padding:0 17px;border-radius:12px;border:1px solid transparent;font-size:12px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-strong));color:#fff;box-shadow:0 12px 28px rgba(47,128,237,.24);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(47,128,237,.3);}
+  .btn-primary:active,.pill:active,.seg-btn:active,.qty-btn:active{transform:scale(.985);}
+  .btn-secondary{background:var(--surface);border-color:var(--line);color:var(--text);}
+  .btn-sm{min-height:40px;padding:0 14px;font-size:11px;border-radius:10px;}
+  .quick-btn{width:auto;min-height:42px;}
+  .card{background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 92%,transparent));border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px;box-shadow:var(--shadow-soft);}
+  @supports not (background:color-mix(in srgb, white 50%, black)){.card{background:var(--surface);}}
+  .card:hover{border-color:var(--line-strong);}
+  .lbl{font-size:9px;font-weight:800;letter-spacing:1.25px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;}
+  .mini{font-size:10px;color:var(--muted);margin:7px 0 0;line-height:1.55;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:22px;}
+  .kpi-card{position:relative;overflow:hidden;min-height:124px;padding:17px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow-soft);}
+  .kpi-card:after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;right:-34px;bottom:-38px;background:var(--kpi-accent,var(--blue-bg));}
+  .kpi-top{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .kpi-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--kpi-bg,var(--blue-bg));color:var(--kpi-color,var(--blue));}
+  .kpi-icon svg{width:17px;height:17px;}
+  .kpi-value{font-size:28px;font-weight:800;letter-spacing:-.8px;margin-top:13px;line-height:1;}
+  .kpi-caption{font-size:10px;color:var(--muted);margin-top:7px;}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 2px 11px;}
+  .section-head h3{margin:0;font-size:15px;letter-spacing:-.2px;}
+  .section-head p{margin:2px 0 0;color:var(--muted);font-size:10px;}
+  .material-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:22px;}
+  .material-card{position:relative;overflow:hidden;padding:19px;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-soft);}
+  .material-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--mat-color,var(--blue));}
+  .material-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .material-name{font-size:13px;font-weight:800;margin:0;}
+  .material-unit{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin-top:2px;}
+  .balance-line{display:flex;align-items:baseline;gap:7px;margin-top:17px;}
+  .bal-num{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1.2px;}
+  .bal-unit{font-size:10px;color:var(--muted);}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:800;padding:5px 8px;border-radius:999px;letter-spacing:.45px;text-transform:uppercase;}
+  .badge:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .progress{height:6px;background:var(--surface2);border-radius:999px;overflow:hidden;margin:15px 0 7px;}
+  .progress>span{display:block;height:100%;border-radius:inherit;transition:width .5s ease;}
+  .progress-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);}
+  .material-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:15px;}
+  .stat{padding:10px 11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);}
+  .stat p{margin:0;}
+  .stat .k{font-size:8px;letter-spacing:.85px;text-transform:uppercase;color:var(--muted);}
+  .stat .v{font-size:16px;font-weight:800;margin-top:3px;}
+  .material-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .material-actions .seg-btn{flex:1;min-width:88px;}
+  .home-lower{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.7fr);gap:14px;align-items:start;}
+  .activity-list{display:flex;flex-direction:column;}
+  .activity-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
+  .activity-row:last-child{border-bottom:0;padding-bottom:0;}
+  .activity-row:first-child{padding-top:3px;}
+  .activity-title{font-size:11px;font-weight:800;margin:0;}
+  .activity-meta{font-size:9px;color:var(--muted);margin:3px 0 0;}
+  .activity-qty{text-align:right;font-size:13px;font-weight:800;}
+  .control-stack{display:grid;gap:9px;}
+  .control-item{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);}
+  .control-item strong{font-size:11px;display:block;}
+  .control-item p{font-size:9px;color:var(--muted);margin:4px 0 10px;}
+  input,select{width:100%;height:46px;padding:0 13px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:12px;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;}
+  input:hover,select:hover{border-color:var(--line-strong);}
+  input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px var(--blue-bg);background:var(--surface);}
+  input::placeholder{color:var(--faint);}
+  input[type=date]{color-scheme:dark;}
+  html[data-theme="light"] input[type=date]{color-scheme:light;}
+  .seg{display:grid;gap:8px;}
+  .seg-btn{min-height:40px;padding:8px 10px;border-radius:10px;cursor:pointer;font-size:10px;font-weight:800;background:var(--surface2);border:1px solid var(--line);color:var(--muted);text-align:center;}
+  .seg-btn:hover{border-color:var(--line-strong);color:var(--text);background:var(--surface3);}
+  .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
+  .pill{min-height:34px;padding:0 12px;border-radius:999px;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap;background:var(--surface);border:1px solid var(--line);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;}
+  .pill:hover{border-color:var(--line-strong);color:var(--text);}
+  .pill.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .bal-card{border-left:3px solid;padding-left:16px;}
+  .qty-row{display:flex;gap:8px;align-items:center;}
+  .qty-btn{width:50px;height:50px;flex-shrink:0;background:var(--surface2);border:1px solid var(--line);border-radius:11px;color:var(--text);font-size:22px;cursor:pointer;}
+  .qty-input{flex:1;text-align:center;font-size:24px;font-weight:800;padding:10px;}
+  .alert-bar{background:linear-gradient(135deg,var(--out-bg),transparent);border:1px solid rgba(255,120,107,.28);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow-soft);}
+  .alert-bar b{color:var(--out);font-size:11px;display:block;margin-bottom:3px;}
+  .alert-bar p{margin:0;font-size:10px;color:var(--text);line-height:1.55;}
+  .ftab{width:100%;border-collapse:separate;border-spacing:0;font-size:10px;}
+  .ftab th{background:var(--surface2);color:var(--muted);font-size:8px;letter-spacing:.7px;text-transform:uppercase;padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);position:sticky;top:0;}
+  .ftab td{padding:9px 8px;border-bottom:1px solid var(--line);color:var(--text);}
+  .ftab tr:last-child td{border-bottom:0;}
   .ftab tr.warn td{background:var(--amber-bg);color:var(--amber);}
-  .ftab tr.crit td{background:var(--out-bg);color:var(--out);font-weight:600;}
+  .ftab tr.crit td{background:var(--out-bg);color:var(--out);font-weight:700;}
   .ftab tr.ship td{background:var(--blue-bg);}
   .ftab .num{text-align:right;font-variant-numeric:tabular-nums;}
-  .mini{font-size:11px;color:var(--muted);margin:6px 0 0;}
-  .btn-sm{padding:9px;font-size:13px;border-radius:9px;}
-  .tab.active{color:var(--text);border-bottom-color:var(--text);}
-  .tab svg{width:18px;height:18px;}
-  .tab span{font-size:8.5px;font-weight:600;letter-spacing:.2px;}
-  /* Content */
-  .content{padding:14px 12px 40px;}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;}
-  .lbl{font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;}
-  input,select{width:100%;box-sizing:border-box;height:46px;padding:0 14px;border-radius:9px;border:1px solid var(--line);
-    background:var(--surface2);color:var(--text);font-size:15px;font-family:inherit;outline:none;
-    -webkit-appearance:none;appearance:none;}
-  input[type=date]{line-height:46px;padding-top:0;padding-bottom:0;}
-  input:focus,select:focus{border-color:var(--blue);}
-  input::placeholder{color:var(--faint);}
-  .btn{padding:14px;border-radius:11px;border:none;font-size:15px;font-weight:600;cursor:pointer;
-    width:100%;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
-  .btn-primary{background:var(--text);color:var(--bg);}
-  .btn-primary:active{transform:scale(.985);}
-  .seg{display:grid;gap:8px;}
-  .seg-btn{padding:12px 4px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;
-    background:var(--surface2);border:1px solid var(--line);color:var(--muted);font-family:inherit;text-align:center;}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-  /* Balance card */
-  .bal-card{border-left:3px solid;padding-left:11px;}
-  .bal-num{font-size:38px;font-weight:600;line-height:1;}
-  .stat{padding:8px 10px;border-radius:9px;}
-  .stat p{margin:0;}
-  .stat .k{font-size:9px;letter-spacing:.8px;text-transform:uppercase;}
-  .stat .v{font-size:18px;font-weight:600;margin-top:2px;}
-  .badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;letter-spacing:.5px;}
-  .pill{padding:6px 14px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;
-    background:var(--surface);border:1px solid var(--line);color:var(--muted);font-family:inherit;}
-  .pill.active{background:var(--text);color:var(--bg);}
-  /* Qty stepper */
-  .qty-row{display:flex;gap:8px;align-items:center;}
-  .qty-btn{width:52px;height:52px;flex-shrink:0;background:var(--surface2);border:1px solid var(--line);
-    border-radius:9px;color:var(--text);font-size:24px;cursor:pointer;font-family:inherit;}
-  .qty-input{flex:1;text-align:center;font-size:26px;font-weight:600;padding:10px;}
-  /* Toast */
-  .toast{position:fixed;top:90px;left:50%;transform:translateX(-50%);padding:11px 20px;border-radius:10px;
-    font-size:13px;font-weight:600;z-index:50;white-space:nowrap;display:none;max-width:90%;}
-  .toast.show{display:block;animation:pop .25s ease;}
-  @keyframes pop{from{opacity:0;transform:transl(-50%,-8px);}to{opacity:1;}}
-  /* Table */
-  table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  th{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
-    padding:8px 5px;border-bottom:1px solid var(--line);}
-  td{padding:9px 5px;font-size:12px;border-bottom:1px solid var(--line);}
-  tfoot td{border-top:1px solid var(--faint);border-bottom:none;font-weight:600;padding-top:10px;}
-  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
-    border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{text-align:center;padding:40px 14px;color:var(--muted);}
-  .empty svg{width:34px;height:34px;opacity:.4;margin-bottom:8px;}
-  .setup-warn{background:var(--out-bg);border:1px solid var(--out);color:#f0a99e;border-radius:10px;
-    padding:12px 14px;font-size:12px;margin-bottom:12px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;table-layout:auto;}
+  th{font-size:8px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:9px 7px;border-bottom:1px solid var(--line);}
+  td{padding:10px 7px;font-size:10px;border-bottom:1px solid var(--line);}
+  tfoot td{border-top:1px solid var(--line-strong);border-bottom:none;font-weight:800;padding-top:11px;}
+  .table-scroll{overflow:auto;border-radius:12px;}
+  .toast{position:fixed;right:22px;bottom:22px;z-index:100;min-width:260px;max-width:min(420px,calc(100vw - 32px));padding:13px 16px;border-radius:13px;font-size:11px;font-weight:800;display:none;box-shadow:0 20px 50px rgba(0,0,0,.28);backdrop-filter:blur(12px);}
+  .toast.show{display:block;animation:toastIn .28s ease both;}
+  @keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{text-align:center;padding:56px 18px;color:var(--muted);border:1px dashed var(--line);border-radius:16px;background:var(--surface);}
+  .empty svg{width:34px;height:34px;opacity:.42;margin-bottom:8px;}
+  .empty p{margin:0;font-size:11px;}
+  .setup-warn{background:var(--out-bg);border:1px solid rgba(255,120,107,.32);color:var(--out);border-radius:13px;padding:13px 15px;font-size:10px;margin-bottom:14px;line-height:1.55;}
+  .mobile-tabs{display:none;}
+  .demo-ribbon{display:none;position:fixed;left:50%;top:8px;z-index:90;transform:translateX(-50%);padding:4px 10px;border-radius:999px;background:var(--amber-bg);border:1px solid rgba(247,185,85,.3);color:var(--amber);font-size:8px;font-weight:900;letter-spacing:1px;text-transform:uppercase;}
+  body.demo-mode .demo-ribbon{display:block;}
+  @media (min-width:901px){
+    #content>.card:not(.alert-bar){max-width:none;}
+    #content>.row2,#content>.row3{max-width:900px;}
+  }
+  @media (max-width:1180px){
+    .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .material-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .material-grid .material-card:last-child{grid-column:span 2;}
+  }
+  @media (max-width:900px){
+    :root{--topbar:64px;}
+    .app-shell{display:block;}
+    .sidebar{display:none;}
+    .topbar{height:var(--topbar);padding:0 15px;}
+    .page-heading h1{font-size:16px;}
+    .page-heading p{font-size:9px;}
+    .clock-chip{display:none;}
+    .top-sync span{display:none;}
+    .top-sync{width:40px;padding:0;}
+    .main{padding:14px 12px 104px;}
+    .mobile-tabs{position:fixed;left:10px;right:10px;bottom:10px;z-index:60;display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:6px;border:1px solid var(--line);border-radius:18px;background:var(--glass);backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.32);}
+    .mobile-tabs .tab{min-height:54px;padding:6px 2px;gap:3px;flex-direction:column;justify-content:center;border-radius:12px;box-shadow:none;}
+    .mobile-tabs .tab:hover{transform:none;}
+    .mobile-tabs .tab.active{box-shadow:none;background:var(--blue-bg);}
+    .mobile-tabs .tab svg{width:17px;height:17px;}
+    .mobile-tabs .tab span{font-size:7px;line-height:1;}
+    .mobile-tabs .tab .dot{right:calc(50% - 15px);top:5px;}
+    .page-intro{padding:19px;align-items:flex-start;flex-direction:column;}
+    .intro-copy h2{font-size:21px;}
+    .intro-actions{justify-content:flex-start;width:100%;}
+    .intro-actions .btn{flex:1;}
+    .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+    .kpi-card{min-height:112px;padding:14px;}
+    .kpi-value{font-size:24px;}
+    .material-grid{grid-template-columns:1fr;gap:10px;}
+    .material-grid .material-card:last-child{grid-column:auto;}
+    .home-lower{grid-template-columns:1fr;}
+    .toast{left:14px;right:14px;bottom:92px;min-width:0;}
+  }
+  @media (max-width:560px){
+    .topbar{gap:8px;}
+    .page-heading p{max-width:210px;}
+    .page-intro{border-radius:17px;}
+    .kpi-grid{grid-template-columns:1fr 1fr;}
+    .kpi-card{min-height:104px;}
+    .kpi-caption{font-size:9px;}
+    .row3{grid-template-columns:1fr;}
+    .row2{grid-template-columns:1fr 1fr;}
+    .card{padding:14px;border-radius:14px;}
+    .material-card{padding:16px;}
+    .bal-num{font-size:34px;}
+    .mobile-tabs{left:6px;right:6px;bottom:6px;}
+  }
+  @media (max-width:390px){
+    .page-heading p{display:none;}
+    .kpi-grid{grid-template-columns:1fr;}
+    .mobile-tabs .tab span{font-size:6.5px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}
+  }
 </style>
 </head>
 <body>
+<div class="demo-ribbon">Interactive demo mode</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">AAP</div>
+      <div class="brand-copy"><strong>Stock Command</strong><span>Honda Lock Section</span></div>
+    </div>
+    <div class="nav-label">Workspace</div>
+    <nav class="tabs" aria-label="Primary navigation">
+      <button class="tab active" data-tab="home" onclick="go('home')" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Command Center</span>
+      </button>
+      <button class="tab" data-tab="record" onclick="go('record')" aria-label="Record transaction">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg><span>New Transaction</span>
+      </button>
+      <button class="tab" data-tab="edit" onclick="go('edit')" aria-label="Correct data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Data Correction</span>
+      </button>
+      <button class="tab" data-tab="plan" onclick="go('plan')" id="tabPlan" aria-label="Material planning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h12v13H3z"/><path d="M15 9h4l2 3v5h-6z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg><span>Material Planning</span>
+      </button>
+      <button class="tab" data-tab="history" onclick="go('history')" aria-label="Transaction history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg><span>Audit History</span>
+      </button>
+      <button class="tab" data-tab="report" onclick="go('report')" aria-label="Reports">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"/></svg><span>Reports & Export</span>
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="system-card">
+        <div class="eyebrow">Google Sheet Gateway</div>
+        <div class="conn"><span class="dot" id="connDot"></span><span id="connTxt" style="color:var(--muted)">CONNECTING</span></div>
+        <p style="margin:8px 0 0;font-size:9px;color:var(--faint)">GitHub Pages · Apps Script API</p>
+      </div>
+    </div>
+  </aside>
 
-<!-- ============ TUKAR URL INI ============ -->
-<script>
-  // ⚠️ PENTING: Ganti dengan URL Web App dari Google Apps Script anda
-  // (Lihat SETUP_GUIDE.md, Step 5). Format: https://script.google.com/macros/s/XXXX/exec
-  var API_URL = "https://script.google.com/macros/s/AKfycbwz3US4NBf3skmiQN2IU348NT1m45NfK-5JnjQJG000Eb8hdq752_PrA35cfVZx9a31Uw/exec";
-</script>
-<!-- ======================================= -->
-
-<div class="hdr">
-  <div class="eyebrow">Armstrong Auto Parts SBM · Honda Lock Section </div>
-  <div class="title">
-    <span>Consumable Stock Tracker</span>
-    <span class="conn"><span class="dot" id="connDot"></span><span id="connTxt" style="color:var(--muted)">…</span></span>
-  </div>
+  <section class="workspace">
+    <header class="topbar">
+      <div class="page-heading">
+        <h1 id="pageTitle">Command Center</h1>
+        <p id="pageSubtitle">Live consumable inventory visibility and control</p>
+      </div>
+      <div class="top-actions">
+        <div class="clock-chip mono" id="liveClock">--:--</div>
+        <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button class="top-sync" onclick="doSync(this)" aria-label="Sync data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-5V2"/><path d="M4 17h5v5"/><path d="M5.1 9A8 8 0 0 1 18.7 5.3L20 7M4 17l1.3 1.7A8 8 0 0 0 18.9 15"/></svg><span>Sync Sheet</span>
+        </button>
+      </div>
+    </header>
+    <main class="main"><div class="content" id="content"></div></main>
+  </section>
 </div>
 
-<div class="tabs">
-  <button class="tab active" data-tab="home" onclick="go('home')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-    <span>Home</span>
-  </button>
-  <button class="tab" data-tab="record" onclick="go('record')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    <span>Record</span>
-  </button>
-  <button class="tab" data-tab="edit" onclick="go('edit')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>
-    <span>Tukar Data</span>
-  </button>
-  <button class="tab" data-tab="plan" onclick="go('plan')" id="tabPlan">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-    <span>Plan</span>
-  </button>
-  <button class="tab" data-tab="history" onclick="go('history')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.3 2.6L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 3"/></svg>
-    <span>History</span>
-  </button>
-  <button class="tab" data-tab="report" onclick="go('report')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span>Report</span>
-  </button>
-</div>
-
-<div class="content" id="content"></div>
-<div class="toast" id="toast"></div>
+<nav class="mobile-tabs" aria-label="Mobile navigation">
+  <button class="tab active" data-tab="home" onclick="go('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Home</span></button>
+  <button class="tab" data-tab="record" onclick="go('record')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span>Record</span></button>
+  <button class="tab" data-tab="edit" onclick="go('edit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Edit</span></button>
+  <button class="tab" data-tab="plan" onclick="go('plan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span>Plan</span></button>
+  <button class="tab" data-tab="history" onclick="go('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 3"/></svg><span>History</span></button>
+  <button class="tab" data-tab="report" onclick="go('report')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 20V14M12 20V4M18 20V10"/></svg><span>Report</span></button>
+</nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+// ============ DEPLOYMENT CONFIG ============
+// Kekalkan URL Web App Google Apps Script anda di sini.
+var API_URL = "https://script.google.com/macros/s/AKfycbwz3US4NBf3skmiQN2IU348NT1m45NfK-5JnjQJG000Eb8hdq752_PrA35cfVZx9a31Uw/exec";
+// Tambah ?demo=1 pada URL GitHub Pages untuk ujian penuh tanpa menulis ke Google Sheet.
+var DEMO_MODE = new URLSearchParams(window.location.search).get("demo") === "1";
+
 // ============ CONFIG ============
 var MATERIALS = [
   { id:"Bubble Wrap",  unit:"bag",   color:"var(--blue)",  bg:"var(--blue-bg)",  pcsPerUnit:200,  subUnit:"pcs", dailyUsage:4 },
@@ -179,7 +416,7 @@ var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 // ============ STATE ============
 var state = {
   tab:"home", records:[], openings:{}, loading:true, online:false,
-  form:{ material:"Bubble Wrap", date:today(), shift:"Morning", line:"L1 DM", operator:"", type:"OUT", qty:"", remarks:"" },
+  form:{ material:"Bubble Wrap", date:today(), shift:"Morning", line:"Door Mirror", operator:"", type:"OUT", qty:"", remarks:"" },
   histFilter:"all", repMat:"Bubble Wrap", repView:"weekly", saving:false, editDate:today(),
   // ---- tab Plan ----
   config:{}, plan:[], delivery:[], planSection:"forecast",
@@ -205,34 +442,75 @@ function loadOpenings(){try{return JSON.parse(localStorage.getItem("aap_openings
 function saveOpenings(o){try{localStorage.setItem("aap_openings",JSON.stringify(o));}catch(e){}}
 
 // ============ API ============
+var DEMO_DB=null;
+function demoDB(){
+  if(DEMO_DB)return DEMO_DB;
+  try{var cached=JSON.parse(localStorage.getItem("aap_demo_command_center")||"null");if(cached){DEMO_DB=cached;return DEMO_DB;}}catch(e){}
+  var base=today(),openDate=dAdd(base,-12);
+  var records=[
+    {id:"demo_open_1",material:"Bubble Wrap",type:"OPENING",qty:38,unit:"bag",line:"-",shift:"-",operator:"Opening",date:openDate,remarks:"Monthly opening stock",timestamp:new Date().toISOString()},
+    {id:"demo_open_2",material:"Glue Tribond",type:"OPENING",qty:18,unit:"tubes",line:"-",shift:"-",operator:"Opening",date:openDate,remarks:"Monthly opening stock",timestamp:new Date().toISOString()},
+    {id:"demo_open_3",material:"NPC Grease",type:"OPENING",qty:12,unit:"pail",line:"-",shift:"-",operator:"Opening",date:openDate,remarks:"Monthly opening stock",timestamp:new Date().toISOString()},
+    {id:"demo_1",material:"Bubble Wrap",type:"OUT",qty:4,unit:"bag",line:"Door Mirror",shift:"Morning",operator:"Aiman",date:dAdd(base,-3),remarks:"Production use",timestamp:new Date(Date.now()-260000000).toISOString()},
+    {id:"demo_2",material:"Glue Tribond",type:"OUT",qty:2,unit:"tubes",line:"Outer Handle",shift:"Morning",operator:"Farah",date:dAdd(base,-2),remarks:"Production use",timestamp:new Date(Date.now()-170000000).toISOString()},
+    {id:"demo_3",material:"Bubble Wrap",type:"OUT",qty:5,unit:"bag",line:"Door Mirror",shift:"Morning",operator:"Aiman",date:dAdd(base,-1),remarks:"Production use",timestamp:new Date(Date.now()-85000000).toISOString()},
+    {id:"demo_4",material:"NPC Grease",type:"OUT",qty:1,unit:"pail",line:"Pass Thru",shift:"Afternoon",operator:"Kumar",date:base,remarks:"Top-up line",timestamp:new Date(Date.now()-4200000).toISOString()},
+    {id:"demo_5",material:"Bubble Wrap",type:"IN",qty:15,unit:"bag",line:"Stock Baru Masuk",shift:"Morning",operator:"Store",date:base,remarks:"Supplier delivery",timestamp:new Date(Date.now()-2200000).toISOString()},
+    {id:"demo_6",material:"Glue Tribond",type:"OUT",qty:1,unit:"tubes",line:"Door Mirror",shift:"Afternoon",operator:"Lina",date:base,remarks:"Production use",timestamp:new Date(Date.now()-900000).toISOString()}
+  ];
+  var plan=[],ds=base,added=0;
+  while(added<28){if(isWorkday(ds)){plan.push({date:ds,material:"Bubble Wrap",planPcs:700});added++;}ds=dAdd(ds,1);}
+  DEMO_DB={records:records,config:{"Bubble Wrap":{safetyStock:12,shipmentSize:15,leadTime:10,alertEmail:"planner@example.com"}},plan:plan,delivery:[{id:"demo_delivery",material:"Bubble Wrap",date:dAdd(base,8),qty:15,unit:"bag",status:"Planned",remarks:"Demo shipment"}]};
+  demoPersist();return DEMO_DB;
+}
+function demoPersist(){try{localStorage.setItem("aap_demo_command_center",JSON.stringify(DEMO_DB));}catch(e){}}
+function demoReply(payload){return new Promise(function(resolve){setTimeout(function(){resolve(payload);},180);});}
+function apiFetch(url,options){
+  var ctrl=window.AbortController?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort();},15000):null;
+  options=options||{};options.cache="no-store";if(ctrl)options.signal=ctrl.signal;
+  return fetch(url,options).then(function(r){if(timer)clearTimeout(timer);if(!r.ok)throw new Error("HTTP "+r.status);return r.json();});
+}
 function apiList(){
-  return fetch(API_URL+"?action=list").then(function(r){return r.json();});
+  if(DEMO_MODE)return demoReply({ok:true,records:demoDB().records.slice()});
+  return apiFetch(API_URL+"?action=list&_="+Date.now());
 }
 function apiSave(rec){
-  return fetch(API_URL,{method:"POST",body:JSON.stringify(rec)}).then(function(r){return r.json();});
+  if(DEMO_MODE){var db=demoDB();db.records.push(Object.assign({timestamp:new Date().toISOString()},rec));demoPersist();return demoReply({ok:true});}
+  return apiFetch(API_URL,{method:"POST",body:JSON.stringify(rec)});
 }
 function apiMeta(){
-  return fetch(API_URL+"?action=meta").then(function(r){return r.json();});
+  if(DEMO_MODE){var db=demoDB();return demoReply({ok:true,config:db.config,plan:db.plan,delivery:db.delivery});}
+  return apiFetch(API_URL+"?action=meta&_="+Date.now());
 }
 function apiPost(obj){
-  return fetch(API_URL,{method:"POST",body:JSON.stringify(obj)}).then(function(r){return r.json();});
+  if(DEMO_MODE){
+    var db=demoDB();
+    if(obj.kind==="plan")obj.rows.forEach(function(row){db.plan=db.plan.filter(function(p){return !(p.material===obj.material&&p.date===row.date);});db.plan.push({date:row.date,material:obj.material,planPcs:row.planPcs});});
+    if(obj.kind==="config")db.config[obj.material]={safetyStock:obj.safetyStock,shipmentSize:obj.shipmentSize,leadTime:obj.leadTime,alertEmail:obj.alertEmail};
+    if(obj.kind==="delivery")db.delivery.push({id:obj.id,material:obj.material,date:obj.date,qty:obj.qty,unit:obj.unit,status:obj.status,remarks:obj.remarks});
+    demoPersist();return demoReply({ok:true});
+  }
+  return apiFetch(API_URL,{method:"POST",body:JSON.stringify(obj)});
 }
 function apiDeleteDelivery(id){
-  return fetch(API_URL+"?action=deleteDelivery&id="+encodeURIComponent(id)).then(function(r){return r.json();});
+  if(DEMO_MODE){var db=demoDB();db.delivery=db.delivery.filter(function(d){return d.id!==id;});demoPersist();return demoReply({ok:true});}
+  return apiFetch(API_URL+"?action=deleteDelivery&id="+encodeURIComponent(id));
 }
 function apiDelete(id){
-  return fetch(API_URL+"?action=delete&id="+encodeURIComponent(id)).then(function(r){return r.json();});
+  if(DEMO_MODE){var db=demoDB();db.records=db.records.filter(function(r){return r.id!==id;});demoPersist();return demoReply({ok:true});}
+  return apiFetch(API_URL+"?action=delete&id="+encodeURIComponent(id));
 }
 
 function setConn(on){
   state.online=on;
-  document.getElementById("connDot").className="dot "+(on?"on":"off");
-  document.getElementById("connTxt").textContent=on?"ONLINE":"OFFLINE";
-  document.getElementById("connTxt").style.color=on?"var(--green)":"var(--out)";
+  var dot=document.getElementById("connDot"),txt=document.getElementById("connTxt");
+  if(dot)dot.className="dot "+(on?"on":"off");
+  if(txt){txt.textContent=DEMO_MODE?"DEMO DATA":(on?"ONLINE":"OFFLINE");txt.style.color=DEMO_MODE?"var(--amber)":(on?"var(--green)":"var(--out)");}
 }
 
 function refresh(){
-  if(API_URL.indexOf("PASTE_")===0){state.loading=false;render();return;}
+  if(API_URL.indexOf("PASTE_")===0&&!DEMO_MODE){state.loading=false;render();return;}
   return Promise.all([apiList(),apiMeta().catch(function(){return {ok:false};})])
     .then(function(res){
       var list=res[0], meta=res[1];
@@ -260,7 +538,7 @@ function planCfg(){
 
 // Manual sync — dipanggil bila user tekan button Sync. Bagi feedback jelas.
 function doSync(btn){
-  if(API_URL.indexOf("PASTE_")===0){toast("App belum disetup",false);return;}
+  if(API_URL.indexOf("PASTE_")===0&&!DEMO_MODE){toast("App belum disetup",false);return;}
   if(btn){btn.disabled=true;btn.dataset.busy="1";}
   var icon=btn&&btn.querySelector("svg");
   if(icon){icon.style.transition="transform .6s ease";icon.style.transform="rotate(360deg)";}
@@ -337,12 +615,52 @@ function todayStat(matId,type){
 }
 
 // ============ NAV ============
+var PAGE_META={
+  home:["Command Center","Live consumable inventory visibility and control"],
+  record:["New Transaction","Record material movement with balance preview"],
+  edit:["Data Correction","Audit and remove incorrect entries safely"],
+  plan:["Material Planning","Forecast consumption, safety stock and supplier delivery"],
+  history:["Audit History","Trace every material movement across the operation"],
+  report:["Reports & Export","Review daily and weekly inventory performance"]
+};
+function updateChrome(){
+  var meta=PAGE_META[state.tab]||PAGE_META.home;
+  var title=document.getElementById("pageTitle"),sub=document.getElementById("pageSubtitle");
+  if(title)title.textContent=meta[0];if(sub)sub.textContent=meta[1];
+  document.querySelectorAll(".tab").forEach(function(t){t.classList.toggle("active",t.dataset.tab===state.tab);});
+  document.title="AAP · "+meta[0];
+}
 function go(tab){
   state.tab=tab;
-  var tabs=document.querySelectorAll(".tab");
-  tabs.forEach(function(t){t.classList.toggle("active",t.dataset.tab===tab);});
+  updateChrome();
   render();
+  if(window.innerWidth<901)window.scrollTo({top:0,behavior:"smooth"});
 }
+function animateContent(){
+  var c=document.getElementById("content");if(!c)return;
+  c.classList.remove("view-enter");void c.offsetWidth;c.classList.add("view-enter");
+}
+function toggleTheme(){
+  var next=document.documentElement.dataset.theme==="light"?"dark":"light";
+  document.documentElement.dataset.theme=next;
+  try{localStorage.setItem("aap_theme",next);}catch(e){}
+  updateThemeIcon();
+}
+function updateThemeIcon(){
+  var icon=document.getElementById("themeIcon");if(!icon)return;
+  icon.innerHTML=document.documentElement.dataset.theme==="light"?'<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>':'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>';
+}
+function initChrome(){
+  var saved="";try{saved=localStorage.getItem("aap_theme")||"";}catch(e){}
+  document.documentElement.dataset.theme=saved||(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");
+  if(DEMO_MODE)document.body.classList.add("demo-mode");
+  updateThemeIcon();updateChrome();tickClock();setInterval(tickClock,30000);
+}
+function tickClock(){
+  var e=document.getElementById("liveClock");if(!e)return;
+  var d=new Date();e.textContent=d.toLocaleDateString("en-MY",{day:"2-digit",month:"short"})+" · "+d.toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit",hour12:false});
+}
+function quickRecord(material,type){state.form.material=material;state.form.type=type||"OUT";state.form.qty="";go("record");}
 
 function toast(msg,ok){
   var t=document.getElementById("toast");
@@ -356,94 +674,84 @@ function toast(msg,ok){
 
 // ============ RENDER ============
 function render(){
-  var c=document.getElementById("content");
-  if(state.loading){c.innerHTML='<div class="empty"><div class="spinner" style="border-top-color:var(--blue);margin-bottom:10px"></div><p>Memuatkan data…</p></div>';return;}
-  if(API_URL.indexOf("PASTE_")===0){
-    c.innerHTML='<div class="setup-warn"><b>⚙️ Belum disetup</b><br>API_URL belum diisi. Buka file index.html, cari <code>PASTE_YOUR_APPS_SCRIPT_URL_HERE</code> dan ganti dengan URL Web App dari Google Apps Script anda. Lihat SETUP_GUIDE.md.</div>'+homeView();
-    return;
-  }
-  if(state.tab==="home")c.innerHTML=homeView();
-  else if(state.tab==="record")c.innerHTML=recordView();
-  else if(state.tab==="edit")c.innerHTML=editView();
-  else if(state.tab==="plan")c.innerHTML=planView();
-  else if(state.tab==="history")c.innerHTML=historyView();
-  else if(state.tab==="report")c.innerHTML=reportView();
-  updatePlanBadge();
+  var c=document.getElementById("content"),html="";
+  if(state.loading){html='<div class="empty"><div class="spinner" style="border-top-color:var(--blue);margin-bottom:10px"></div><p>Loading operational data…</p></div>';}
+  else if(API_URL.indexOf("PASTE_")===0&&!DEMO_MODE){html='<div class="setup-warn"><b>⚙️ API belum disetup</b><br>Gantikan API_URL dengan URL Web App Google Apps Script. Untuk preview tanpa backend, buka fail ini dengan <code>?demo=1</code>.</div>'+homeView();}
+  else if(state.tab==="home")html=homeView();
+  else if(state.tab==="record")html=recordView();
+  else if(state.tab==="edit")html=editView();
+  else if(state.tab==="plan")html=planView();
+  else if(state.tab==="history")html=historyView();
+  else if(state.tab==="report")html=reportView();
+  c.innerHTML=html;updatePlanBadge();updateChrome();animateContent();
 }
 
 // Titik merah kat tab Plan bila baki <= safety stock
 function updatePlanBadge(){
-  var tab=document.getElementById("tabPlan");
-  if(!tab)return;
-  var old=tab.querySelector(".dot");
-  if(old)old.remove();
+  var tabs=document.querySelectorAll('.tab[data-tab="plan"]');
+  tabs.forEach(function(tab){var old=tab.querySelector(".dot");if(old)old.remove();});
   if(state.loading||!state.records.length)return;
   var cfg=planCfg();
   if(calcBalance(PLAN_MATERIAL)<=cfg.safetyStock){
-    var d=document.createElement("span");
-    d.className="dot";
-    tab.appendChild(d);
+    tabs.forEach(function(tab){var d=document.createElement("span");d.className="dot";tab.appendChild(d);});
   }
 }
 
 function homeView(){
   var now=new Date();
-  var dateLbl=DAYS[now.getDay()]+", "+now.getDate()+" "+MONTHS[now.getMonth()]+" "+now.getFullYear();
-  var html='<div class="card" style="display:flex;justify-content:space-between;align-items:center">'+
-    '<div><span class="lbl">Hari ini</span><p class="mono" style="margin:0;font-size:14px;font-weight:600">'+dateLbl+'</p></div>'+
-    '<button class="pill" onclick="doSync(this)" style="display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.8-3.4L23 10M1 14l4.7 4.4A9 9 0 0 0 20.5 15"/></svg>Sync</button></div>';
+  var dateLbl=now.toLocaleDateString("ms-MY",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  var todayRecords=state.records.filter(function(r){return r.date===today()&&(r.type==="IN"||r.type==="OUT");});
+  var totalIn=todayRecords.filter(function(r){return r.type==="IN";}).reduce(function(s,r){return s+Number(r.qty||0);},0);
+  var totalOut=todayRecords.filter(function(r){return r.type==="OUT";}).reduce(function(s,r){return s+Number(r.qty||0);},0);
+  var critical=0,totalBalance=0;
+  MATERIALS.forEach(function(m){
+    var bal=calcBalance(m.id),op=getOpening(m.id)||0;
+    var safety=m.id===PLAN_MATERIAL?planCfg().safetyStock:Math.max(2,Math.round(op*.18));
+    if(bal<=safety)critical++;totalBalance+=bal;
+  });
+  var html='<section class="page-intro stagger-item"><div class="intro-copy">'+
+    '<div class="overline">Armstrong Auto Parts SBM · Live Operations</div><h2>Consumable Stock Command Center</h2>'+
+    '<p>'+dateLbl+' · Unified visibility for stock movement, replenishment planning and traceability.</p></div>'+
+    '<div class="intro-actions"><button class="btn btn-primary quick-btn" onclick="go(\'record\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>New transaction</button>'+
+    '<button class="btn btn-secondary quick-btn" onclick="doSync(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-5V2M4 17h5v5"/><path d="M5 9a8 8 0 0 1 13-4l2 2M4 17l2 2a8 8 0 0 0 13-4"/></svg>Refresh</button></div></section>';
+
+  html+='<section class="kpi-grid">'+
+    kpiCard("Materials monitored",MATERIALS.length,"Active stock categories","var(--blue-bg)","var(--blue)",'<path d="M4 7h16v13H4zM8 7V4h8v3M4 12h16"/>')+
+    kpiCard("Critical attention",critical,critical?"Review safety stock now":"All materials within control","var(--out-bg)","var(--out)",'<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.6 2.4 17.3A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.7L13.7 3.6a2 2 0 0 0-3.4 0z"/>')+
+    kpiCard("Today movement",fmt(totalIn+totalOut),"IN "+fmt(totalIn)+" · OUT "+fmt(totalOut),"var(--green-bg)","var(--green)",'<path d="M7 7h11l-3-3M17 17H6l3 3"/>')+
+    kpiCard("Current stock units",fmt(totalBalance),"Combined operational units","var(--amber-bg)","var(--amber)",'<path d="M3 6l9-4 9 4-9 4-9-4zM3 12l9 4 9-4M3 18l9 4 9-4"/>')+
+    '</section>';
+
+  if(critical){html+='<div class="alert-bar"><b>⚠ '+critical+' material memerlukan perhatian</b><p>Semak baki, safety stock dan cadangan delivery dalam Material Planning sebelum shift seterusnya.</p></div>';}
+  html+='<div class="section-head"><div><h3>Material health</h3><p>Current balance, movement and replenishment readiness</p></div><button class="pill" onclick="go(\'plan\')">Open planning</button></div><section class="material-grid">';
 
   MATERIALS.forEach(function(m){
-    var bal=calcBalance(m.id);
-    var op=getOpening(m.id);
-    var hasOp=op!==undefined;
-    if(op===undefined)op=0;
+    var bal=calcBalance(m.id),op=getOpening(m.id),hasOp=op!==undefined;
+    op=hasOp?Number(op):0;
     var tIn=todayStat(m.id,"IN"),tOut=todayStat(m.id,"OUT");
-    var st=bal>10?{c:"var(--green)",l:"Normal"}:bal>3?{c:"var(--amber)",l:"Low"}:{c:"var(--out)",l:"Critical"};
-    var pct=op>0?Math.min(100,Math.round(bal/op*100)):0;
-    html+='<div class="card bal-card" style="border-left-color:'+m.color+'">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
-        '<div><span class="lbl">'+m.id+' · '+m.unit+'</span>'+
-        '<div style="display:flex;align-items:baseline;gap:6px"><span class="bal-num mono" style="color:'+m.color+'">'+bal+'</span>'+
-        '<span style="font-size:12px;color:var(--muted)">'+m.unit+' baki</span></div>'+
-        (m.pcsPerUnit?'<p class="mono" style="font-size:11px;color:var(--muted);margin:2px 0 0">'+subQty(m.id,bal)+'</p>':'')+'</div>'+
-        '<span class="badge" style="color:'+st.c+';background:'+st.c+'22">'+st.l+'</span></div>'+
-      '<div class="row2" style="margin-bottom:'+(hasOp&&op>0?'10px':'4px')+'">'+
-        '<div class="stat" style="background:var(--in-bg)"><p class="k" style="color:var(--in)">Hari ini IN</p><p class="v mono" style="color:var(--in)">'+tIn+'</p></div>'+
-        '<div class="stat" style="background:var(--out-bg)"><p class="k" style="color:var(--out)">Hari ini OUT</p><p class="v mono" style="color:var(--out)">'+tOut+'</p></div></div>';
-    if(hasOp&&op>0){
-      html+='<div style="margin-bottom:10px"><div style="background:var(--surface2);border-radius:4px;height:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+st.c+'"></div></div>'+
-        '<p class="mono" style="font-size:9px;color:var(--muted);margin:4px 0 0;text-align:right">'+pct+'% dari '+op+' '+m.unit+'</p></div>';
-    }
-    html+='<button class="seg-btn" onclick="editOpening(\''+m.id+'\')" style="display:inline-flex;align-items:center;gap:5px;width:auto;padding:7px 12px">'+
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>'+
-      (hasOp?"Edit opening stock":"Set opening stock")+'</button>'+
-      '<p style="font-size:10px;color:var(--faint);margin:7px 0 0;line-height:1.4">&#9432; Set hanya pada awal bulan (baki bawa dari bulan lepas). Nilai ini sync ke Google Sheet.</p></div>';
+    var safety=m.id===PLAN_MATERIAL?planCfg().safetyStock:Math.max(2,Math.round(op*.18));
+    var status=bal<=safety?{label:"Critical",c:"var(--out)",bg:"var(--out-bg)"}:bal<=safety*1.5?{label:"Watch",c:"var(--amber)",bg:"var(--amber-bg)"}:{label:"Healthy",c:"var(--green)",bg:"var(--green-bg)"};
+    var pct=op>0?Math.max(0,Math.min(100,Math.round(bal/op*100))):0;
+    html+='<article class="material-card" style="--mat-color:'+m.color+'"><div class="material-head"><div><p class="material-name">'+m.id+'</p><div class="material-unit">'+m.unit+' · '+(m.pcsPerUnit?m.pcsPerUnit.toLocaleString()+" "+m.subUnit+" / unit":"tracked unit")+'</div></div><span class="badge" style="color:'+status.c+';background:'+status.bg+'">'+status.label+'</span></div>'+
+      '<div class="balance-line"><span class="bal-num mono" style="color:'+m.color+'">'+fmt(bal)+'</span><span class="bal-unit">'+m.unit+' available</span></div>'+
+      (m.pcsPerUnit?'<div class="mono" style="font-size:9px;color:var(--muted);margin-top:5px">'+subQty(m.id,bal)+'</div>':'')+
+      '<div class="progress"><span style="width:'+pct+'%;background:'+status.c+'"></span></div><div class="progress-meta"><span>'+pct+'% of opening</span><span>'+(hasOp?fmt(op)+" "+m.unit:"Opening not set")+'</span></div>'+
+      '<div class="material-stats"><div class="stat"><p class="k">Today in</p><p class="v mono" style="color:var(--in)">+'+fmt(tIn)+'</p></div><div class="stat"><p class="k">Today out</p><p class="v mono" style="color:var(--out)">-'+fmt(tOut)+'</p></div></div>'+
+      '<div class="material-actions"><button class="seg-btn" onclick="quickRecord(\''+m.id+'\',\'OUT\')">Record OUT</button><button class="seg-btn" onclick="quickRecord(\''+m.id+'\',\'IN\')">Record IN</button><button class="seg-btn" onclick="editOpening(\''+m.id+'\')">Opening</button></div></article>';
   });
+  html+='</section>';
 
-  // recent
-  if(state.records.length){
-    var recent=state.records.slice().sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);}).slice(0,5);
-    html+='<div class="card"><span class="lbl">Aktiviti terkini</span>';
-    recent.forEach(function(r){
-      var m=mat(r.material)||{unit:""};
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">'+
-        '<div><p style="font-size:13px;font-weight:600;margin:0">'+r.material+'</p>'+
-        '<p class="mono" style="font-size:11px;color:var(--muted);margin:2px 0 0">'+(r.line||"")+' · '+(r.operator||"")+' · '+(r.date||"").slice(5)+'</p></div>'+
-        '<span class="mono" style="color:'+(r.type==="IN"?"var(--in)":"var(--out)")+';font-size:14px;font-weight:600">'+(r.type==="IN"?"+":"-")+r.qty+' '+m.unit+'</span></div>';
-    });
-    html+='</div>';
-  }
-
-  // Settings / tools
-  html+='<div class="card"><span class="lbl">Tetapan</span>'+
-    '<button class="seg-btn" onclick="resetLocal()" style="display:inline-flex;align-items:center;gap:6px;width:auto;padding:9px 14px;border-color:var(--border-secondary);color:var(--muted)">'+
-    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.8-3.4L23 10M1 14l4.7 4.4A9 9 0 0 0 20.5 15"/></svg>'+
-    'Muat semula dari Sheet</button>'+
-    '<p style="font-size:10px;color:var(--faint);margin:8px 0 0;line-height:1.5">Tarik data terkini dari Google Sheet (opening stock &amp; balance kini disimpan dalam Sheet, bukan local).</p></div>';
-
+  var recent=state.records.filter(function(r){return r.type==="IN"||r.type==="OUT";}).slice().sort(function(a,b){return new Date(b.timestamp||0)-new Date(a.timestamp||0);}).slice(0,7);
+  html+='<section class="home-lower"><div class="card"><div class="section-head" style="margin:0 0 9px"><div><h3>Recent activity</h3><p>Latest material movements from Google Sheet</p></div><button class="pill" onclick="go(\'history\')">View audit</button></div><div class="activity-list">';
+  if(!recent.length)html+='<div class="empty" style="padding:30px 12px"><p>No transactions recorded yet.</p></div>';
+  recent.forEach(function(r){var m=mat(r.material)||{unit:""};var isIn=r.type==="IN";html+='<div class="activity-row"><div><p class="activity-title">'+r.material+'</p><p class="activity-meta mono">'+(r.date||"")+' · '+(r.shift||"—")+' · '+(r.line||"—")+' · '+(r.operator||"—")+'</p></div><div class="activity-qty mono" style="color:'+(isIn?'var(--in)':'var(--out)')+'">'+(isIn?'+':'-')+fmt(r.qty)+' '+m.unit+'</div></div>';});
+  html+='</div></div><aside class="card"><div class="section-head" style="margin:0 0 11px"><div><h3>System controls</h3><p>Data integrity and operating tools</p></div></div><div class="control-stack">'+
+    '<div class="control-item"><strong>Google Sheet synchronization</strong><p>Fetch the latest records, opening stock and planning metadata.</p><button class="seg-btn" style="width:100%" onclick="resetLocal()">Reload from Sheet</button></div>'+
+    '<div class="control-item"><strong>Interactive demo</strong><p>Open this same file with <span class="mono">?demo=1</span> to test save, delete, planning and reports locally.</p><button class="seg-btn" style="width:100%" onclick="location.href=location.pathname+\'?demo=1\'">Launch demo mode</button></div>'+
+    '<div class="control-item"><strong>Export-ready reporting</strong><p>Download the selected material report as CSV for sharing or analysis.</p><button class="seg-btn" style="width:100%" onclick="go(\'report\')">Open reports</button></div></div></aside></section>';
   return html;
 }
+function kpiCard(label,value,caption,bg,color,icon){return '<article class="kpi-card" style="--kpi-bg:'+bg+';--kpi-color:'+color+';--kpi-accent:'+bg+'"><div class="kpi-top"><span class="lbl" style="margin:0">'+label+'</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'+icon+'</svg></span></div><div class="kpi-value mono">'+value+'</div><div class="kpi-caption">'+caption+'</div></article>';}
 
 function recordView(){
   var f=state.form,m=mat(f.material);
@@ -995,8 +1303,13 @@ function exportCSV(){
 }
 
 // ============ INIT ============
+initChrome();
 render();
 refresh();
+window.addEventListener("keydown",function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();go("record");}
+  if(e.altKey&&/[1-6]/.test(e.key)){e.preventDefault();go(["home","record","edit","plan","history","report"][Number(e.key)-1]);}
+});
 </script>
 </body>
 </html>
